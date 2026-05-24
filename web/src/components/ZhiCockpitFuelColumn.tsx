@@ -21,9 +21,7 @@ export function ZhiCockpitFuelColumn({
   onExpandedChange?: (expanded: boolean) => void;
 }) {
   const { t } = useTranslation();
-  const [expanded, setExpanded] = useState(
-    layout === 'sheet' ? true : defaultFuelExpandedForLayout(),
-  );
+  const [expanded, setExpanded] = useState(() => (layout === 'sheet' ? true : defaultFuelExpandedForLayout()));
 
   const toggle = () => {
     const next = !expanded;

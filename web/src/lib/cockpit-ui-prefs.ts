@@ -11,10 +11,28 @@ export function defaultFuelExpandedForLayout(): boolean {
   return isFuelColumnExpanded();
 }
 
+function safeGetLocalStorage(key: string): string | null {
+  try {
+    if (typeof window === 'undefined') return null;
+    return window.localStorage?.getItem(key) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function safeSetLocalStorage(key: string, value: string): void {
+  try {
+    if (typeof window === 'undefined') return;
+    window.localStorage?.setItem(key, value);
+  } catch {
+    return;
+  }
+}
+
 export function isFuelColumnExpanded(): boolean {
-  return localStorage.getItem(FUEL_EXPANDED_KEY) === '1';
+  return safeGetLocalStorage(FUEL_EXPANDED_KEY) === '1';
 }
 
 export function setFuelColumnExpanded(expanded: boolean): void {
-  localStorage.setItem(FUEL_EXPANDED_KEY, expanded ? '1' : '0');
+  safeSetLocalStorage(FUEL_EXPANDED_KEY, expanded ? '1' : '0');
 }

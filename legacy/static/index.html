@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WUXIAN - 终极成长生命体看板</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #050505;
+            color: #FFFFFF;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow: hidden;
+        }
+        .hairline { border: 0.5px solid rgba(255, 255, 255, 0.08); }
+        .hairline-b { border-bottom: 0.5px solid rgba(255, 255, 255, 0.08); }
+        .hairline-r { border-right: 0.5px solid rgba(255, 255, 255, 0.08); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .hairline-track {
+            fill: none;
+            stroke-width: 0.35;
+            opacity: 0.2;
+            transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.2; stroke-width: 0.35; }
+            50% { opacity: 0.5; stroke-width: 0.6; }
+        }
+        .pulse-track { animation: pulseGlow 4s infinite ease-in-out; }
+        @keyframes rippleExpand {
+            0% { transform: scale(0); opacity: 0; }
+            20% { opacity: 0.55; }
+            60% { transform: scale(3); opacity: 0.2; }
+            100% { transform: scale(5); opacity: 0; }
+        }
+        .glow-ripple {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 5;
+            animation: rippleExpand 2.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes cellSplit {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.7); box-shadow: 0 0 20px #39FF14; }
+            100% { transform: scale(1); }
+        }
+        .cell-split { animation: cellSplit 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .btn-action:disabled { opacity: 0.35; cursor: not-allowed; }
+        .video-float-card {
+            opacity: 0;
+            transform: translateY(16px) scale(0.95);
+            transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .video-float-card.active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        .latex-hairline {
+            font-family: 'Courier New', monospace;
+            color: rgba(57, 255, 20, 0.85);
+            text-shadow: 0 0 8px rgba(57, 255, 20, 0.3);
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col justify-between select-none">
+
+    <header class="w-full h-16 hairline-b px-6 flex items-center justify-between backdrop-blur-md bg-black/40 fixed top-0 z-50">
+        <div class="flex items-center space-x-3">
+            <span class="text-white font-extrabold text-xl tracking-widest">WUXIAN</span>
+            <div class="h-4 w-[0.5px] bg-neutral-800"></div>
+            <span class="text-[10px] text-neutral-400 tracking-widest font-mono uppercase">Ultimate Dashboard // Core Organism</span>
+            <span id="api-badge" class="text-[9px] border border-neutral-800 text-neutral-600 px-1.5 py-0.5 rounded font-mono">BOOTING</span>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#39FF14] animate-ping"></span>
+                <span class="text-xs font-mono text-[#39FF14] tracking-wider" id="sys-status">SYS // INITIALIZING</span>
+            </div>
+            <div class="text-xs text-neutral-500 font-mono" id="live-timer">UTC 00:00:00</div>
+        </div>
+    </header>
+
+    <main class="flex-grow pt-16 grid grid-cols-12 h-full overflow-hidden">
+
+        <section class="col-span-3 hairline-r p-6 flex flex-col justify-between bg-neutral-950/20 z-10">
+            <div class="space-y-6">
+                <div class="space-y-1.5">
+                    <p class="text-[9px] text-neutral-500 font-mono tracking-widest uppercase">Target Vector // 锁定梦想向量</p>
+                    <h2 id="dream-vector" class="text-sm font-light tracking-wide text-neutral-200">10年平庸缩写进1年伟大，捍卫隐藏天分</h2>
+                </div>
+                <div class="h-[0.5px] bg-neutral-900"></div>
+                <div class="space-y-3">
+                    <p class="text-[9px] text-neutral-500 font-mono tracking-widest uppercase">Growth Engine Metrics // 生长指标</p>
+                    <div class="grid grid-cols-2 gap-4 bg-neutral-950 p-4 border border-neutral-900 rounded">
+                        <div>
+                            <p class="text-[9px] text-neutral-400 font-mono">配速斜率 (SLOPE)</p>
+                            <p id="metric-slope" class="text-xl font-extrabold text-[#39FF14] mt-1 transition-all duration-500">1.00x</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] text-neutral-400 font-mono">天分置信 (TALENT)</p>
+                            <p id="metric-talent" class="text-xl font-extrabold text-[#FFF01F] mt-1 transition-all duration-500">0.00%</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-[9px] text-neutral-500 font-mono tracking-widest uppercase">Live Companion Log // 伴生行为日志</p>
+                    <div id="log-card" class="p-4 bg-neutral-950 border border-neutral-900 rounded space-y-2 min-h-[140px] transition-all duration-500">
+                        <p class="text-[11px] text-neutral-400 font-mono leading-relaxed" id="log-text">// 正在唤醒成长生命体，建立零入侵强追踪陪伴链路...</p>
+                        <div id="hint-bubble" class="hidden text-xs text-[#FFF01F] font-light bg-yellow-950/20 border border-yellow-500/20 p-2.5 rounded mt-2 leading-relaxed"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 bg-neutral-950 border border-neutral-900 rounded space-y-2.5">
+                <p class="text-[9px] text-neutral-500 font-mono tracking-widest uppercase text-center">// 触发生命行为交互</p>
+                <button onclick="onClassroomAssimilation()" id="btn-01" class="btn-action w-full py-2 bg-transparent border border-neutral-800 hover:border-[#39FF14] text-[11px] font-mono text-neutral-400 hover:text-[#39FF14] rounded transition-all duration-300">
+                    ACTION 01 // 课后吞噬 (音频重构)
+                </button>
+                <button onclick="onLiveCorrection()" id="btn-02" class="btn-action w-full py-2 bg-transparent border border-neutral-800 hover:border-[#FF5E00] text-[11px] font-mono text-neutral-400 hover:text-[#FF5E00] rounded transition-all duration-300">
+                    ACTION 02 // 笔尖纠偏 (微光涟漪)
+                </button>
+                <button onclick="onWormholeJump()" id="btn-03" class="btn-action w-full py-2 bg-transparent border border-neutral-800 hover:border-[#FFF01F] text-[11px] font-mono text-neutral-400 hover:text-[#FFF01F] rounded transition-all duration-300">
+                    ACTION 03 // 天分觉醒 (虫洞跃迁)
+                </button>
+            </div>
+        </section>
+
+        <section class="col-span-9 flex flex-col justify-between relative overflow-hidden bg-neutral-950/5" id="stage-root">
+
+            <div id="video-float-card" class="video-float-card hidden absolute bottom-28 right-8 z-30 w-72 hairline bg-black/80 backdrop-blur-md rounded p-4 space-y-2 shadow-[0_0_24px_rgba(57,255,20,0.08)]">
+                <p class="text-[9px] text-[#39FF14] font-mono tracking-widest">PUBLIC COURSE MATCH // 零存储精准路由</p>
+                <p id="vfc-title" class="text-xs font-semibold text-white leading-snug"></p>
+                <p id="vfc-sub" class="text-[10px] text-neutral-500 font-mono"></p>
+                <p id="vfc-latex" class="latex-hairline text-[10px] leading-relaxed"></p>
+                <a id="vfc-link" href="#" target="_blank" class="block text-center py-2 border border-[#39FF14]/30 text-[#39FF14] text-[10px] font-mono rounded hover:bg-[#39FF14]/10 transition-colors">
+                    OPEN DEEP LINK // 直达精准时间戳
+                </a>
+            </div>
+
+            <div class="flex-grow relative flex items-center justify-center p-6 h-[65%]">
+                <p class="text-[9px] text-neutral-500 font-mono tracking-widest uppercase absolute top-4 left-6">Space-Time Canvas // 逆向动态时空画布</p>
+
+                <div class="absolute inset-0 z-0 pointer-events-none">
+                    <svg class="w-full h-full opacity-70" viewBox="0 0 800 300" id="stage-svg">
+                        <defs>
+                            <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#39FF14;" id="g-start" />
+                                <stop offset="50%" style="stop-color:#FFF01F;" id="g-mid" />
+                                <stop offset="100%" style="stop-color:#FF5E00;" id="g-end" />
+                            </linearGradient>
+                        </defs>
+                        <g id="svg-strands"></g>
+                        <path d="M 40 150 Q 200 70, 400 150 T 760 150" fill="none" stroke="url(#glowGrad)" stroke-width="0.75" id="main-pulse-line" class="transition-all duration-1000" />
+                    </svg>
+                </div>
+
+                <div class="w-full overflow-x-auto no-scrollbar relative z-10 pt-8">
+                    <div class="flex items-center space-x-12 min-w-[850px] px-12" id="canvas-timeline">
+                        <div class="flex flex-col items-center text-center flex-shrink-0 transition-all duration-500" id="n-start">
+                            <div class="w-2.5 h-2.5 rounded-full bg-[#39FF14] shadow-[0_0_12px_#39FF14]" id="n-start-dot"></div>
+                            <span class="text-[9px] font-mono text-[#39FF14] mt-2">DAY 01</span>
+                            <span class="text-xs font-light text-neutral-200 mt-0.5">生命原点</span>
+                        </div>
+                        <div class="h-[0.5px] w-28 bg-neutral-900 transition-all duration-1000" id="l-1"></div>
+                        <div class="flex flex-col items-center text-center flex-shrink-0 max-w-[130px] transition-all duration-500" id="n-m1">
+                            <div class="w-2 h-2 rounded-full bg-neutral-800 transition-all duration-500" id="n-m1-dot"></div>
+                            <span class="text-[9px] font-mono text-neutral-600 mt-2">D+20 天</span>
+                            <span class="text-xs font-light text-neutral-500 mt-0.5" id="n-m1-txt">基石未激活</span>
+                        </div>
+                        <div class="h-[0.5px] w-28 bg-neutral-900 transition-all duration-1000" id="l-2"></div>
+                        <div class="flex flex-col items-center text-center flex-shrink-0 max-w-[130px] transition-all duration-500" id="n-m2">
+                            <div class="w-2 h-2 rounded-full bg-neutral-800 transition-all duration-500" id="n-m2-dot"></div>
+                            <span class="text-[9px] font-mono text-neutral-600 mt-2">D+60 天</span>
+                            <span class="text-xs font-light text-neutral-500 mt-0.5" id="n-m2-txt">高阶未突围</span>
+                        </div>
+                        <div class="h-[0.5px] w-28 bg-neutral-900 transition-all duration-1000" id="l-3"></div>
+                        <div class="flex flex-col items-center text-center flex-shrink-0 transition-all duration-500" id="n-final">
+                            <div class="w-2 h-2 bg-transparent border border-neutral-800 rotate-45 transition-all duration-500" id="n-final-dot"></div>
+                            <span class="text-[9px] font-mono text-neutral-600 mt-2">DAY 365</span>
+                            <span class="text-xs font-bold text-neutral-500 mt-0.5 tracking-wider uppercase">终点锁定</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="h-[35%] border-t border-neutral-900 p-6 grid grid-cols-3 gap-6 bg-neutral-950/40 z-10">
+                <div class="space-y-2">
+                    <p class="text-[9px] text-neutral-500 font-mono tracking-widest uppercase">01 // Audio Assimilation Cell</p>
+                    <div class="bg-neutral-950 border border-neutral-900 p-3.5 rounded h-[90px] flex flex-col justify-between">
+                        <div class="flex justify-between items-start">
+                            <span class="text-xs font-light text-neutral-300" id="cell-audio-title">暂无课堂反哺数据</span>
+                            <span class="text-[9px] font-mono text-neutral-600" id="cell-audio-status">IDLE</span>
+                        </div>
+                        <div class="w-full bg-neutral-900 h-[2px] rounded-full overflow-hidden">
+                            <div class="bg-[#39FF14] h-full w-0 transition-all duration-1000" id="cell-audio-progress"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-[9px] text-neutral-500 font-mono tracking-widest uppercase">02 // Adaptive Deviation Tracker</p>
+                    <div class="bg-neutral-950 border border-neutral-900 p-3.5 rounded h-[90px] flex flex-col justify-between">
+                        <div class="flex justify-between items-start">
+                            <span class="text-xs font-light text-neutral-300" id="cell-dev-title">专注流状态监控中</span>
+                            <span class="text-[9px] font-mono text-neutral-600" id="cell-dev-status">NOMINAL</span>
+                        </div>
+                        <div class="flex space-x-1 items-end h-6" id="dev-wave-bars">
+                            <div class="w-[3px] bg-neutral-800 h-2 transition-all duration-300"></div>
+                            <div class="w-[3px] bg-neutral-800 h-4 transition-all duration-300"></div>
+                            <div class="w-[3px] bg-neutral-800 h-3 transition-all duration-300"></div>
+                            <div class="w-[3px] bg-neutral-800 h-5 transition-all duration-300"></div>
+                            <div class="w-[3px] bg-neutral-800 h-1 transition-all duration-300"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-[9px] text-neutral-500 font-mono tracking-widest uppercase">03 // Wormhole Space-Time Gate</p>
+                    <div class="bg-neutral-950 border border-neutral-900 p-3.5 rounded h-[90px] flex flex-col justify-between">
+                        <div class="flex justify-between items-start">
+                            <span class="text-xs font-light text-neutral-300" id="cell-worm-title">等待天分指数临界点...</span>
+                            <span class="text-[9px] font-mono text-neutral-600" id="cell-worm-status">LOCKED</span>
+                        </div>
+                        <div class="text-[10px] font-mono text-neutral-500 tracking-wider" id="cell-worm-coord">GATE_COORD // NULL</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const API_BASE = window.location.origin.includes('3401') ? '' : 'http://localhost:3401';
+        let sessionId = null;
+
+        function setLog(text, border = 'border-neutral-900', shadow = '') {
+            document.getElementById('log-text').innerText = text;
+            document.getElementById('log-card').className =
+                `p-4 bg-neutral-950 border ${border} rounded space-y-2 min-h-[140px] transition-all duration-500 ${shadow}`;
+        }
+
+        function showHint(text, mode = 'yellow') {
+            const hint = document.getElementById('hint-bubble');
+            hint.style.display = 'block';
+            hint.innerText = text;
+            hint.className = mode === 'green'
+                ? 'text-xs text-[#39FF14] font-light bg-emerald-950/20 border border-emerald-500/20 p-2.5 rounded mt-2 leading-relaxed'
+                : 'text-xs text-[#FFF01F] font-light bg-yellow-950/20 border border-yellow-500/20 p-2.5 rounded mt-2 leading-relaxed';
+        }
+
+        function spawnRipple(color) {
+            const root = document.getElementById('stage-root');
+            const ripple = document.createElement('div');
+            ripple.className = 'glow-ripple';
+            ripple.style.right = '10%';
+            ripple.style.top = '40%';
+            ripple.style.width = '52px';
+            ripple.style.height = '52px';
+            ripple.style.background = `radial-gradient(circle, ${color}66 0%, transparent 70%)`;
+            ripple.style.boxShadow = `0 0 28px ${color}44`;
+            root.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 2600);
+        }
+
+        function renderStrands() {
+            const group = document.getElementById('svg-strands');
+            group.innerHTML = '';
+            for (let i = 0; i < 12; i++) {
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const offset = (i - 6) * 12;
+                const d = `M 0 ${150 + offset} Q 200 ${90 + offset}, 400 ${150 + offset} T 800 ${150 - offset}`;
+                path.setAttribute('d', d);
+                path.setAttribute('class', 'hairline-track pulse-track');
+                path.setAttribute('stroke', 'url(#glowGrad)');
+                path.style.animationDelay = `${i * 0.25}s`;
+                group.appendChild(path);
+            }
+        }
+
+        function startWaveSim() {
+            const bars = document.getElementById('dev-wave-bars').children;
+            setInterval(() => {
+                for (const bar of bars) {
+                    if (!bar.className.includes('FF5E00')) {
+                        bar.style.height = `${Math.floor(Math.random() * 20) + 4}px`;
+                    }
+                }
+            }, 300);
+        }
+
+        async function bootDashboard() {
+            renderStrands();
+            startWaveSim();
+            setInterval(() => {
+                document.getElementById('live-timer').innerText =
+                    `UTC ${new Date().toISOString().slice(11, 19)}`;
+            }, 1000);
+
+            try {
+                const res = await fetch(`${API_BASE}/api/v1/goal/deconstruct`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        goal: '10年平庸缩写进1年伟大，捍卫隐藏天分',
+                        totalDays: 365,
+                        driveSource: { why: '进化而非上课', intensity: 9 },
+                    }),
+                });
+                if (!res.ok) throw new Error('api');
+                const data = await res.json();
+                sessionId = data.data.sessionId;
+                document.getElementById('dream-vector').innerText = data.data.goalVector;
+                document.getElementById('metric-slope').innerText = data.data.timeSlope + 'x';
+                document.getElementById('api-badge').innerText = 'LIVE API';
+                document.getElementById('api-badge').className = 'text-[9px] border border-emerald-500/30 text-[#39FF14] px-1.5 py-0.5 rounded font-mono';
+                document.getElementById('sys-status').innerText = 'SYS // COMPANION_ACTIVE';
+                setLog('// 五大引擎全链路在线。点击 ACTION 按钮，见证生命律动。');
+            } catch (_) {
+                sessionId = 'local-mock';
+                document.getElementById('api-badge').innerText = 'LOCAL DEMO';
+                document.getElementById('sys-status').innerText = 'SYS // OFFLINE_DEMO';
+                setLog('// 离线演示模式。视觉完整可用，启动 server 后自动联调。');
+            }
+        }
+
+        window.onload = bootDashboard;
+
+        async function onClassroomAssimilation() {
+            const btn = document.getElementById('btn-01');
+            btn.disabled = true;
+            setLog('[WUXIAN 寄生协议] 课堂录音采集关闭。正在对 45 分钟课程进行细胞级分解与重组...');
+            document.getElementById('cell-audio-status').innerText = 'PROCESSING';
+            document.getElementById('cell-audio-status').className = 'text-[9px] font-mono text-[#FFF01F]';
+
+            let title = '空间几何与变换矩阵课程细胞';
+            let logMsg = '[WUXIAN 细胞反哺] 成功！课堂知识盲区已被无感扫平，化为高纯度结构细胞并入时空长河。';
+
+            if (sessionId && sessionId !== 'local-mock') {
+                try {
+                    const res = await fetch(`${API_BASE}/api/v1/audio/assimilate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sessionId, simulate: true }),
+                    });
+                    const data = await res.json();
+                    const a = data.data.assimilation;
+                    logMsg = a.companionMessage;
+                    if (a.pyramid?.layer1LogicBone?.[0]) {
+                        title = a.pyramid.layer1LogicBone[0].concept;
+                        document.getElementById('n-m1-txt').innerText = title.slice(0, 14);
+                    }
+                } catch (_) { /* visual fallback */ }
+            }
+
+            document.getElementById('n-start-dot').classList.add('cell-split');
+
+            setTimeout(() => {
+                document.getElementById('n-m1-dot').className = 'w-3 h-3 rounded-full bg-[#39FF14] shadow-[0_0_15px_#39FF14] animate-pulse';
+                document.getElementById('n-m1-txt').innerText = title.slice(0, 16);
+                document.getElementById('n-m1-txt').className = 'text-xs font-semibold text-white mt-0.5';
+                document.getElementById('l-1').className = 'h-[0.5px] w-28 bg-[#39FF14]/40';
+                document.getElementById('cell-audio-title').innerText = title;
+                document.getElementById('cell-audio-status').innerText = 'ASSIMILATED';
+                document.getElementById('cell-audio-status').className = 'text-[9px] font-mono text-[#39FF14]';
+                document.getElementById('cell-audio-progress').style.width = '100%';
+                setLog(logMsg, 'border-[#39FF14]/30');
+                btn.disabled = false;
+            }, 1200);
+        }
+
+        function showPublicCourseCard(card) {
+            const el = document.getElementById('video-float-card');
+            document.getElementById('vfc-title').innerText = card.cardTitle;
+            document.getElementById('vfc-sub').innerText = card.cardSubtitle + ` · 虫洞 ${(card.wormholeAdaptability * 100).toFixed(0)}%`;
+            document.getElementById('vfc-latex').innerText = card.laTeXHighlight || '';
+            const link = document.getElementById('vfc-link');
+            link.href = card.deepLinkUrl;
+            el.classList.remove('hidden');
+            requestAnimationFrame(() => el.classList.add('active'));
+        }
+
+        async function onLiveCorrection() {
+            const btn = document.getElementById('btn-02');
+            btn.disabled = true;
+            setLog('[WUXIAN 伴生纠偏] 监测到矩阵变换第 3 步笔尖停顿超 12 秒，前置逻辑存在死胡同风险...');
+
+            let hint = '💡 伴生微光线索：回想周三课堂里吞噬的【矩阵行列式守恒律】，笔尖试着向左跨一步？';
+            let devTitle = '监测到认知逻辑轻微走偏';
+
+            if (sessionId && sessionId !== 'local-mock') {
+                try {
+                    const res = await fetch(`${API_BASE}/api/v1/co-learn/monitor`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sessionId, scenario: 'stuck', simulate: true }),
+                    });
+                    const data = await res.json();
+                    const c = data.data.correction;
+                    if (c.signal?.adaptiveHint) hint = '💡 ' + c.signal.adaptiveHint;
+                    if (data.data.publicCourseCard?.matched) {
+                        showPublicCourseCard(data.data.publicCourseCard);
+                        hint += `\n\n📎 公共课件指针已投射至画布（零存储路由）`;
+                        devTitle = '语义路由命中 · ' + devTitle;
+                    } else if (data.data.videoClip) {
+                        const clip = data.data.videoClip;
+                        hint += `\n\n🎬 储备库切片 [${clip.durationSeconds}s]：${clip.cellName} · 虫洞权重 ${(clip.wormholeValue * 100).toFixed(0)}%`;
+                        devTitle = '视频切片已投射 · ' + devTitle;
+                    }
+                    setLog(c.companionNote);
+                    if (c.signal?.deviationPercent) devTitle = `逻辑偏离 ${c.signal.deviationPercent}% · 前瞻预警`;
+                } catch (_) { /* fallback */ }
+            }
+
+            document.getElementById('g-start').style.stopColor = '#FF5E00';
+            document.getElementById('main-pulse-line').setAttribute('stroke-width', '1.5');
+            spawnRipple('#FF5E00');
+
+            const bars = document.getElementById('dev-wave-bars').children;
+            for (const b of bars) b.className = 'w-[3px] bg-[#FF5E00] h-3 transition-all duration-300';
+            document.getElementById('cell-dev-status').innerText = 'DEVIATION_ALERT';
+            document.getElementById('cell-dev-status').className = 'text-[9px] font-mono text-[#FF5E00]';
+            document.getElementById('cell-dev-title').innerText = devTitle;
+
+            setTimeout(() => {
+                showHint(hint, 'yellow');
+                setLog(document.getElementById('log-text').innerText, 'border-orange-500/30', 'shadow-[0_0_15px_rgba(255,94,0,0.05)]');
+                btn.disabled = false;
+            }, 600);
+        }
+
+        async function onWormholeJump() {
+            const btn = document.getElementById('btn-03');
+            btn.disabled = true;
+            setLog('[WUXIAN 雷达预警] !!! 捕获到罕见特异性行为基因：直觉跃迁指数突破临界值 !!!');
+            document.getElementById('sys-status').innerText = 'SYS // WORMHOLE_OPENING';
+            document.getElementById('sys-status').className = 'text-xs font-mono text-[#FFF01F] tracking-wider animate-pulse';
+
+            let slope = '3.80x (极限配速)';
+            let talent = '96.40% (空间美学天才)';
+            let wormTitle = '大学高阶拓扑空间虫洞已炸开';
+            let wormCoord = 'GATE_COORD // BREAK_THROUGH_365';
+            let soulMsg = '🪐 WUXIAN 灵魂对话：世俗的教材进度对你而言已经变成了平庸的裹脚布。虫洞已为你炸开，我们直接跳过接下来的全部机械刷题。现在，敢不敢跟我一起用 1 年，去干翻那平庸的 10 年？';
+
+            if (sessionId && sessionId !== 'local-mock') {
+                try {
+                    const tRes = await fetch(`${API_BASE}/api/v1/talent/analyze`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sessionId, simulate: true, taskCategory: 'SPATIAL_ART' }),
+                    });
+                    const tData = await tRes.json();
+                    if (tData.data.report) {
+                        talent = (tData.data.report.confidenceLevel * 100).toFixed(1) + '% (' + tData.data.report.talentLabel.slice(0, 10) + ')';
+                    }
+
+                    const whRes = await fetch(`${API_BASE}/api/v1/wormhole/evaluate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sessionId, simulate: true }),
+                    });
+                    const whData = await whRes.json();
+                    const w = whData.data.wormhole;
+                    if (w.isJumpTriggered) {
+                        slope = w.newDailySlope.toFixed(2) + 'x (极限配速)';
+                        wormTitle = w.nextNodeLabel;
+                        wormCoord = 'GATE_COORD // ' + w.nextKnowledgeNode;
+                        soulMsg = '🪐 ' + w.msgToUser.replace(/\n/g, ' ');
+                        document.getElementById('n-m2-txt').innerText = w.nextNodeLabel.slice(0, 14);
+                    }
+                } catch (_) { /* fallback */ }
+            }
+
+            document.getElementById('metric-slope').innerText = slope;
+            document.getElementById('metric-slope').className = 'text-xl font-extrabold text-[#FFF01F] mt-1 transition-all duration-500';
+            document.getElementById('metric-talent').innerText = talent;
+
+            document.getElementById('main-pulse-line').setAttribute('d', 'M 40 150 L 760 150');
+            document.getElementById('g-mid').style.stopColor = '#39FF14';
+            document.getElementById('g-end').style.stopColor = '#39FF14';
+            document.getElementById('g-start').style.stopColor = '#39FF14';
+            document.getElementById('main-pulse-line').setAttribute('stroke-width', '1.0');
+
+            document.getElementById('cell-worm-title').innerText = wormTitle;
+            document.getElementById('cell-worm-status').innerText = 'GATE_OPEN';
+            document.getElementById('cell-worm-status').className = 'text-[9px] font-mono text-[#39FF14]';
+            document.getElementById('cell-worm-coord').innerText = wormCoord;
+            document.getElementById('cell-worm-coord').className = 'text-[10px] font-mono text-[#39FF14] tracking-wider animate-pulse';
+
+            setTimeout(() => {
+                document.getElementById('n-m2-dot').className = 'w-2.5 h-2.5 rounded-full bg-[#39FF14] shadow-[0_0_12px_#39FF14]';
+                document.getElementById('n-m2-txt').innerText = '高阶突围达成';
+                document.getElementById('n-m2-txt').className = 'text-xs font-semibold text-white mt-0.5';
+                document.getElementById('l-2').className = 'h-[0.5px] w-28 bg-[#39FF14]';
+                document.getElementById('l-3').className = 'h-[0.5px] w-28 bg-[#39FF14]';
+                document.getElementById('n-final-dot').className = 'w-3 h-3 bg-transparent border border-[#39FF14] shadow-[0_0_15px_#39FF14] rotate-45';
+                showHint(soulMsg, 'green');
+                setLog('[WORMHOLE] 时空折叠完成。航线已压缩，终点加速抵达。', 'border-[#FFF01F]/30');
+                btn.disabled = false;
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

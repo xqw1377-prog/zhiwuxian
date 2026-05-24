@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WUXIAN | 前端看板</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            black: '#000000',
+                            white: '#FFFFFF',
+                            green: '#39FF14',
+                            yellow: '#FFF01F',
+                            orange: '#FF5E00',
+                        },
+                        neutral: {
+                            darkLine: 'rgba(255, 255, 255, 0.08)',
+                            textDark: 'rgba(255, 255, 255, 0.4)',
+                        },
+                    },
+                    letterSpacing: {
+                        wuxian: '0.35em',
+                        heading: '0.15em',
+                    },
+                    borderWidth: {
+                        '0.5': '0.5px',
+                    },
+                    boxShadow: {
+                        'neon-green': '0 0 12px rgba(57, 255, 14, 0.25)',
+                        'neon-orange': '0 0 12px rgba(255, 94, 0, 0.25)',
+                    },
+                },
+            },
+        };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Noto+Sans+SC:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', 'Noto Sans SC', sans-serif;
+            background-color: #000000;
+            color: #FFFFFF;
+        }
+
+        .glow-dot {
+            width: 2px;
+            height: 2px;
+            border-radius: 1px;
+        }
+
+        .glow-dot--green {
+            background: #39FF14;
+            box-shadow: 0 0 6px rgba(57, 255, 20, 0.8);
+        }
+
+        .glow-dot--orange {
+            background: #FF5E00;
+            box-shadow: 0 0 6px rgba(255, 94, 0, 0.8);
+        }
+
+        .glow-dot--white {
+            background: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
+        }
+
+        .kpi-value {
+            transition: color 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                        text-shadow 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .kpi-value.refresh-glow {
+            color: #39FF14;
+            text-shadow: 0 0 12px rgba(57, 255, 20, 0.5);
+        }
+
+        .kpi-value.alert-glow {
+            color: #FF5E00;
+            text-shadow: 0 0 12px rgba(255, 94, 0, 0.5);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 0.5px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-outline:hover {
+            border-color: #39FF14;
+            color: #39FF14;
+            filter: drop-shadow(0 0 6px rgba(57, 255, 20, 0.3));
+        }
+
+        .stream-item {
+            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                        transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stream-item.entering {
+            opacity: 0;
+            transform: translateY(-4px);
+        }
+
+        .stream-item.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .stream-item.exiting {
+            opacity: 0;
+        }
+
+        .chart-crosshair {
+            stroke: rgba(255, 255, 255, 0.3);
+            stroke-width: 0.5;
+            opacity: 0;
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+        }
+
+        .chart-area:hover .chart-crosshair.visible {
+            opacity: 1;
+        }
+
+        .progress-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 9999px;
+            height: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 9999px;
+            background: linear-gradient(90deg, #39FF14, #FFF01F, #FF5E00);
+            box-shadow: 0 0 8px rgba(57, 255, 20, 0.3);
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .bar-capsule {
+            border-radius: 9999px;
+            background: linear-gradient(180deg, #39FF14, #FFF01F, #FF5E00);
+        }
+
+        .logo-mini {
+            filter: drop-shadow(0 0 4px rgba(74, 222, 128, 0.12));
+        }
+
+        .infinity-line {
+            fill: none;
+            stroke-width: 0.35;
+        }
+
+        .status-pulse {
+            animation: breathe 3s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+        }
+
+        .connection-dot {
+            animation: breathe 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col px-8 py-6 gap-6">
+
+    <!-- 1.2 顶部全局导航栏 -->
+    <header class="h-16 flex items-center justify-between border-b border-0.5 border-neutral-darkLine shrink-0">
+        <div class="flex items-center gap-3">
+            <svg class="logo-mini w-10 h-5" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#39FF14"/>
+                        <stop offset="45%" stop-color="#FFF01F"/>
+                        <stop offset="100%" stop-color="#FF5E00"/>
+                    </linearGradient>
+                </defs>
+                <g id="header-logo-lines"></g>
+            </svg>
+            <span class="text-sm font-extrabold tracking-wuxian uppercase">WUXIAN</span>
+        </div>
+
+        <div class="flex items-center gap-8">
+            <div class="flex items-center gap-2">
+                <span class="connection-dot w-1.5 h-1.5 rounded-full bg-brand-green shadow-neon-green"></span>
+                <span class="text-xs text-neutral-textDark tracking-heading uppercase">System Online</span>
+            </div>
+            <div id="global-time" class="text-xs font-mono text-neutral-textDark tracking-wider"></div>
+            <button class="btn-outline px-4 py-1.5 rounded-full text-xs tracking-heading uppercase">Settings</button>
+        </div>
+    </header>
+
+    <!-- 1.2 核心数据区 -->
+    <main class="flex-1 grid grid-cols-12 gap-6 min-h-0">
+
+        <!-- 左侧 3栏：核心指标流 -->
+        <aside class="col-span-12 lg:col-span-3 flex flex-col gap-6">
+            <div class="relative" data-kpi="visits">
+                <div class="glow-dot glow-dot--green absolute top-0 right-0"></div>
+                <p class="text-xs text-neutral-textDark tracking-heading uppercase mb-2">Total Visits / 全球访问</p>
+                <p class="kpi-value text-4xl font-extrabold" id="kpi-visits">24,850</p>
+                <div class="mt-3 progress-track">
+                    <div class="progress-fill" style="width: 78%"></div>
+                </div>
+            </div>
+
+            <div class="border-t border-0.5 border-neutral-darkLine pt-6 relative" data-kpi="active">
+                <div class="glow-dot glow-dot--white absolute top-6 right-0"></div>
+                <p class="text-xs text-neutral-textDark tracking-heading uppercase mb-2">Active Users / 活跃用户</p>
+                <p class="kpi-value text-4xl font-extrabold" id="kpi-active">3,142</p>
+                <div class="mt-3 progress-track">
+                    <div class="progress-fill" style="width: 62%"></div>
+                </div>
+            </div>
+
+            <div class="border-t border-0.5 border-neutral-darkLine pt-6 relative" data-kpi="latency">
+                <div class="glow-dot glow-dot--orange absolute top-6 right-0"></div>
+                <p class="text-xs text-neutral-textDark tracking-heading uppercase mb-2">Avg Latency / 平均延迟</p>
+                <p class="kpi-value text-4xl font-extrabold alert-glow" id="kpi-latency">128<span class="text-lg text-neutral-textDark ml-1">ms</span></p>
+                <div class="mt-3 progress-track">
+                    <div class="progress-fill" style="width: 45%"></div>
+                </div>
+            </div>
+
+            <div class="border-t border-0.5 border-neutral-darkLine pt-6 relative" data-kpi="uptime">
+                <div class="glow-dot glow-dot--green absolute top-6 right-0"></div>
+                <p class="text-xs text-neutral-textDark tracking-heading uppercase mb-2">Uptime / 系统可用率</p>
+                <p class="kpi-value text-4xl font-extrabold" id="kpi-uptime">99.97<span class="text-lg text-neutral-textDark">%</span></p>
+            </div>
+        </aside>
+
+        <!-- 中间 6栏：主视觉图表区 -->
+        <section class="col-span-12 lg:col-span-6 flex flex-col gap-6">
+
+            <!-- 折线图 -->
+            <div class="flex-1 flex flex-col min-h-[280px]">
+                <div class="flex items-center justify-between mb-4">
+                    <p class="text-xs text-neutral-textDark tracking-heading uppercase">Traffic Flow / 流量趋势</p>
+                    <div class="flex gap-4 text-xs text-neutral-textDark">
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-px bg-brand-green inline-block"></span> Inbound</span>
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-px bg-brand-orange inline-block"></span> Outbound</span>
+                    </div>
+                </div>
+                <div class="chart-area flex-1 relative" id="line-chart-container">
+                    <svg id="line-chart" class="w-full h-full" viewBox="0 0 600 220" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="japaneseNeon" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#39FF14"/>
+                                <stop offset="45%" stop-color="#FFF01F"/>
+                                <stop offset="100%" stop-color="#FF5E00"/>
+                            </linearGradient>
+                            <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="#39FF14" stop-opacity="0.05"/>
+                                <stop offset="100%" stop-color="#39FF14" stop-opacity="0"/>
+                            </linearGradient>
+                        </defs>
+                        <g id="grid-lines"></g>
+                        <path id="area-path" fill="url(#areaFill)" stroke="none"/>
+                        <path id="line-path-a" fill="none" stroke="url(#japaneseNeon)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path id="line-path-b" fill="none" stroke="#FF5E00" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+                        <line id="crosshair-v" class="chart-crosshair" x1="0" y1="10" x2="0" y2="200"/>
+                        <line id="crosshair-h" class="chart-crosshair" x1="40" y1="0" x2="580" y2="0"/>
+                        <circle id="hover-dot" r="3" fill="#FFFFFF" opacity="0" style="transition: opacity 0.3s"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- 柱状图 -->
+            <div class="border-t border-0.5 border-neutral-darkLine pt-6">
+                <p class="text-xs text-neutral-textDark tracking-heading uppercase mb-4">Hourly Distribution / 时段分布</p>
+                <svg id="bar-chart" class="w-full h-24" viewBox="0 0 600 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"></svg>
+            </div>
+        </section>
+
+        <!-- 右侧 3栏：实时动态追踪队列 -->
+        <aside class="col-span-12 lg:col-span-3 flex flex-col border-l border-0.5 border-neutral-darkLine pl-6">
+            <div class="flex items-center justify-between mb-4">
+                <p class="text-xs text-neutral-textDark tracking-heading uppercase">Live Stream / 实时追踪</p>
+                <span class="status-pulse text-xs text-brand-green tracking-heading">LIVE</span>
+            </div>
+            <div id="stream-list" class="flex flex-col gap-3 flex-1 overflow-hidden"></div>
+        </aside>
+    </main>
+
+    <!-- 1.2 底部状态栏 -->
+    <footer class="h-8 flex items-center justify-between border-t border-0.5 border-neutral-darkLine shrink-0">
+        <div class="flex items-center gap-4 text-[10px] text-neutral-textDark tracking-heading uppercase">
+            <span>WUXIAN Dashboard v1.0</span>
+            <span class="text-neutral-darkLine">|</span>
+            <span class="flex items-center gap-1.5">
+                <span class="w-1 h-1 rounded-full bg-brand-green connection-dot"></span>
+                WebSocket Connected
+            </span>
+        </div>
+        <p class="text-[10px] text-neutral-textDark tracking-heading uppercase opacity-40">© 2024 WUXIAN Studio</p>
+    </footer>
+
+    <script>
+        /* ── Header Logo ── */
+        (function renderHeaderLogo() {
+            const group = document.getElementById('header-logo-lines');
+            const numLines = 12;
+            for (let i = 0; i < numLines; i++) {
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const scale = 64 - i * 1.2;
+                const d = [];
+                for (let j = 0; j <= 60; j++) {
+                    const t = (j / 60) * Math.PI * 2;
+                    const sinT = Math.sin(t), cosT = Math.cos(t);
+                    const denom = 1 + sinT * sinT;
+                    const x = 100 + (scale * cosT) / denom;
+                    const y = 50 + (scale * sinT * cosT) / denom;
+                    d.push((j === 0 ? 'M' : 'L') + ` ${x} ${y}`);
+                }
+                path.setAttribute('d', d.join(' '));
+                path.setAttribute('class', 'infinity-line');
+                path.setAttribute('stroke', 'url(#logoGradient)');
+                path.style.opacity = (1 - i / numLines) * 0.6 + 0.2;
+                group.appendChild(path);
+            }
+        })();
+
+        /* ── Global Clock ── */
+        function updateClock() {
+            const now = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            document.getElementById('global-time').textContent =
+                `${now.getFullYear()}.${pad(now.getMonth()+1)}.${pad(now.getDate())}  ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())} UTC+8`;
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        /* ── Monotone Spline (Catmull-Rom) ── */
+        function catmullRomSpline(points, tension = 0.5) {
+            if (points.length < 2) return '';
+            let d = `M ${points[0].x} ${points[0].y}`;
+            for (let i = 0; i < points.length - 1; i++) {
+                const p0 = points[Math.max(i - 1, 0)];
+                const p1 = points[i];
+                const p2 = points[i + 1];
+                const p3 = points[Math.min(i + 2, points.length - 1)];
+                const cp1x = p1.x + (p2.x - p0.x) / 6 * tension;
+                const cp1y = p1.y + (p2.y - p0.y) / 6 * tension;
+                const cp2x = p2.x - (p3.x - p1.x) / 6 * tension;
+                const cp2y = p2.y - (p3.y - p1.y) / 6 * tension;
+                d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+            }
+            return d;
+        }
+
+        /* ── Line Chart ── */
+        const chartW = 600, chartH = 220, padX = 40, padY = 20;
+        const plotW = chartW - padX - 10, plotH = chartH - padY * 2;
+
+        const dataA = [42, 55, 48, 72, 65, 80, 74, 90, 85, 78, 92, 88];
+        const dataB = [30, 38, 42, 50, 45, 58, 52, 65, 60, 55, 68, 62];
+        const labels = 12;
+
+        function valToY(v, max) {
+            return padY + plotH - (v / max) * plotH;
+        }
+
+        function buildPoints(data, max) {
+            return data.map((v, i) => ({
+                x: padX + (i / (data.length - 1)) * plotW,
+                y: valToY(v, max),
+            }));
+        }
+
+        const maxVal = Math.max(...dataA, ...dataB) * 1.1;
+        const ptsA = buildPoints(dataA, maxVal);
+        const ptsB = buildPoints(dataB, maxVal);
+
+        const gridGroup = document.getElementById('grid-lines');
+        for (let i = 0; i <= 4; i++) {
+            const y = padY + (i / 4) * plotH;
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', padX);
+            line.setAttribute('y1', y);
+            line.setAttribute('x2', padX + plotW);
+            line.setAttribute('y2', y);
+            line.setAttribute('stroke', 'rgba(255,255,255,0.03)');
+            line.setAttribute('stroke-width', '0.5');
+            line.setAttribute('stroke-dasharray', '4 4');
+            gridGroup.appendChild(line);
+        }
+
+        const lineD = catmullRomSpline(ptsA);
+        const lineB = catmullRomSpline(ptsB);
+        document.getElementById('line-path-a').setAttribute('d', lineD);
+        document.getElementById('line-path-b').setAttribute('d', lineB);
+
+        const areaD = lineD + ` L ${ptsA[ptsA.length-1].x} ${padY + plotH} L ${ptsA[0].x} ${padY + plotH} Z`;
+        document.getElementById('area-path').setAttribute('d', areaD);
+
+        /* Chart Hover Crosshair */
+        const chartContainer = document.getElementById('line-chart-container');
+        const crossV = document.getElementById('crosshair-v');
+        const crossH = document.getElementById('crosshair-h');
+        const hoverDot = document.getElementById('hover-dot');
+
+        chartContainer.addEventListener('mousemove', (e) => {
+            const rect = chartContainer.getBoundingClientRect();
+            const ratioX = (e.clientX - rect.left) / rect.width;
+            const svgX = ratioX * chartW;
+            const idx = Math.round(((svgX - padX) / plotW) * (dataA.length - 1));
+            if (idx < 0 || idx >= dataA.length) return;
+
+            const pt = ptsA[idx];
+            crossV.setAttribute('x1', pt.x);
+            crossV.setAttribute('x2', pt.x);
+            crossH.setAttribute('y1', pt.y);
+            crossH.setAttribute('y2', pt.y);
+            hoverDot.setAttribute('cx', pt.x);
+            hoverDot.setAttribute('cy', pt.y);
+            hoverDot.setAttribute('opacity', '0.8');
+            crossV.classList.add('visible');
+            crossH.classList.add('visible');
+        });
+
+        chartContainer.addEventListener('mouseleave', () => {
+            crossV.classList.remove('visible');
+            crossH.classList.remove('visible');
+            hoverDot.setAttribute('opacity', '0');
+        });
+
+        /* ── Bar Chart ── */
+        const barData = [35, 52, 68, 45, 78, 90, 62, 55, 72, 48, 38, 85];
+        const barMax = Math.max(...barData);
+        const barSvg = document.getElementById('bar-chart');
+        const barW = 600, barH = 80, barPad = 20;
+        const slotW = (barW - barPad * 2) / barData.length;
+
+        barData.forEach((v, i) => {
+            const h = (v / barMax) * (barH - 16);
+            const x = barPad + i * slotW + slotW * 0.3;
+            const w = slotW * 0.4;
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('x', x);
+            rect.setAttribute('y', barH - h);
+            rect.setAttribute('width', w);
+            rect.setAttribute('height', h);
+            rect.setAttribute('rx', w / 2);
+            rect.setAttribute('fill', 'url(#japaneseNeon)');
+            rect.setAttribute('opacity', '0.6');
+            barSvg.appendChild(rect);
+        });
+
+        /* ── Live Stream ── */
+        const streamEvents = [
+            { type: 'info', text: 'Node-07 流量峰值 2.4Gbps', time: '14:32:01' },
+            { type: 'warn', text: 'Region-AP 延迟超阈值 128ms', time: '14:31:48' },
+            { type: 'info', text: '新用户会话 +142/min', time: '14:31:22' },
+            { type: 'ok', text: 'CDN 缓存命中率 94.2%', time: '14:30:55' },
+            { type: 'warn', text: 'API Gateway 重试率 0.8%', time: '14:30:31' },
+        ];
+
+        const streamPool = [
+            'Edge-12 带宽利用率 67%',
+            'Session Pool 扩容 +200',
+            'TLS 握手耗时优化 -12ms',
+            '异常请求拦截 23 次',
+            '数据库连接池 82% 占用',
+            '缓存预热完成 AP-South',
+            '负载均衡权重自动调整',
+            'DDoS 防护规则已更新',
+        ];
+
+        const typeColors = { info: 'glow-dot--white', warn: 'glow-dot--orange', ok: 'glow-dot--green' };
+
+        function renderStreamItem(ev) {
+            const el = document.createElement('div');
+            el.className = 'stream-item flex items-start gap-3 py-2 border-b border-0.5 border-neutral-darkLine';
+            el.innerHTML = `
+                <div class="glow-dot ${typeColors[ev.type]} mt-1.5 shrink-0"></div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs text-white/80 leading-relaxed">${ev.text}</p>
+                    <p class="text-[10px] text-neutral-textDark mt-0.5 font-mono">${ev.time}</p>
+                </div>`;
+            return el;
+        }
+
+        const streamList = document.getElementById('stream-list');
+        streamEvents.forEach(ev => streamList.appendChild(renderStreamItem(ev)));
+
+        let poolIdx = 0;
+        function pushStreamEvent() {
+            const now = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+            const types = ['info', 'ok', 'warn'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            const ev = { type, text: streamPool[poolIdx % streamPool.length], time };
+            poolIdx++;
+
+            const el = renderStreamItem(ev);
+            el.classList.add('entering');
+            streamList.insertBefore(el, streamList.firstChild);
+
+            requestAnimationFrame(() => {
+                el.classList.remove('entering');
+                el.classList.add('active');
+            });
+
+            const items = streamList.querySelectorAll('.stream-item');
+            if (items.length > 6) {
+                const last = items[items.length - 1];
+                last.classList.add('exiting');
+                setTimeout(() => last.remove(), 500);
+            }
+        }
+        setInterval(pushStreamEvent, 4000);
+
+        /* ── KPI Data Refresh Glow ── */
+        function flashKPI(el, isAlert) {
+            el.classList.remove('refresh-glow', 'alert-glow');
+            void el.offsetWidth;
+            el.classList.add(isAlert ? 'alert-glow' : 'refresh-glow');
+            setTimeout(() => el.classList.remove('refresh-glow', 'alert-glow'), 600);
+        }
+
+        function simulateDataRefresh() {
+            const visits = 24850 + Math.floor(Math.random() * 200 - 50);
+            const active = 3142 + Math.floor(Math.random() * 80 - 30);
+            const latency = 120 + Math.floor(Math.random() * 30);
+            const uptime = (99.95 + Math.random() * 0.04).toFixed(2);
+
+            const visitsEl = document.getElementById('kpi-visits');
+            visitsEl.textContent = visits.toLocaleString();
+            flashKPI(visitsEl, false);
+
+            const activeEl = document.getElementById('kpi-active');
+            activeEl.textContent = active.toLocaleString();
+            flashKPI(activeEl, false);
+
+            const latencyEl = document.getElementById('kpi-latency');
+            const isAlert = latency > 140;
+            latencyEl.innerHTML = `${latency}<span class="text-lg text-neutral-textDark ml-1">ms</span>`;
+            flashKPI(latencyEl, isAlert);
+
+            const uptimeEl = document.getElementById('kpi-uptime');
+            uptimeEl.innerHTML = `${uptime}<span class="text-lg text-neutral-textDark">%</span>`;
+            flashKPI(uptimeEl, false);
+        }
+        setInterval(simulateDataRefresh, 6000);
+    </script>
+</body>
+</html>

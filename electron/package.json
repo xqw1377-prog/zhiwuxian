@@ -1,0 +1,22 @@
+{
+  "name": "wuxian-electron-interceptor",
+  "version": "3.5.0",
+  "private": true,
+  "description": "WUXIAN 3.5 桌面拦截外挂（ZHI Cockpit 配套）",
+  "engines": {
+    "node": "^20.0.0"
+  },
+  "main": "main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prestart": "node -v",
+    "start": "electron .",
+    "dev": "cross-env NODE_ENV=development electron ."
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "cross-env": "^7.0.3",
+    "electron": "^34.0.0",
+    "typescript": "^5.6.0"
+  }
+}

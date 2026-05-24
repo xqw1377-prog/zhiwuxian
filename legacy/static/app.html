@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WUXIAN · 动态目标路由器</title>
+  <link rel="stylesheet" href="/client/wuxian-app.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+
+  <!-- Loading -->
+  <div id="loading" class="hidden fixed inset-0 z-50 bg-white/70 backdrop-blur-md items-center justify-center">
+    <div class="glass rounded-3xl px-8 py-6 flex items-center gap-4">
+      <span class="pulse-orb"></span>
+      <span id="loading-text" class="text-sm font-semibold text-slate-700">正在计算路径…</span>
+    </div>
+  </div>
+
+  <!-- 全景抽屉 -->
+  <div id="drawer-overlay" class="hidden fixed inset-0 z-40 bg-black/15 backdrop-blur-sm" onclick="WuxianClient.togglePanorama(false)"></div>
+  <aside id="panorama-drawer" class="drawer fixed top-0 right-0 z-50 h-full w-full max-w-md glass border-l border-slate-200 p-6 overflow-y-auto">
+    <div class="flex justify-between items-center mb-6">
+      <div>
+        <p class="text-[10px] font-black tracking-widest text-slate-400 uppercase">全景层</p>
+        <h3 class="text-xl font-black mt-1">路线图 · 重算记录</h3>
+      </div>
+      <button onclick="WuxianClient.togglePanorama(false)" class="text-2xl text-slate-400 hover:text-slate-700">×</button>
+    </div>
+    <section class="mb-6">
+      <p class="text-[10px] font-black tracking-widest text-emerald-600 mb-3">ROADMAP</p>
+      <div id="roadmap-list" class="space-y-2"></div>
+    </section>
+    <section class="mb-6">
+      <p class="text-[10px] font-black tracking-widest text-orange-600 mb-3">重算历史 · SQLite</p>
+      <div id="reroute-history" class="space-y-2"></div>
+    </section>
+    <p class="share-hint">截图分享你的斜率仪表盘 — 「今天你斜率多少了？」</p>
+  </aside>
+
+  <main class="max-w-5xl mx-auto px-5 md:px-8 py-8 md:py-10">
+
+    <!-- Header -->
+    <header class="flex flex-wrap items-center justify-between gap-4 mb-8">
+      <div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-2xl md:text-3xl font-black tracking-[0.2em]">WUXIAN</span>
+          <span id="mode-badge" class="badge badge-live">就绪</span>
+          <span id="persist-badge" class="hidden badge" style="background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0">已持久化</span>
+        </div>
+        <p class="mt-2 text-sm text-slate-500">你负责专注，我负责重路由</p>
+      </div>
+      <div class="flex gap-2 flex-wrap">
+        <a href="/lab" class="px-4 py-2 rounded-full text-xs font-bold border border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-400 transition">进化实验室</a>
+        <a href="/wuxian" class="px-4 py-2 rounded-full text-xs font-bold border border-slate-200 bg-white hover:border-emerald-400 transition">视频加速器</a>
+        <button id="share-btn" class="hidden px-4 py-2 rounded-full text-xs font-bold border border-slate-200 bg-white hover:border-emerald-400 transition" onclick="alert('截图你的斜率仪表盘，分享「今天你斜率多少了？」')">分享斜率</button>
+        <button id="panorama-btn" class="hidden px-4 py-2 rounded-full text-xs font-bold border border-slate-200 bg-white hover:border-emerald-400 transition" onclick="WuxianClient.togglePanorama(true)">路线图</button>
+        <button id="reset-btn" class="hidden px-4 py-2 rounded-full text-xs font-bold bg-slate-900 text-white hover:bg-slate-700 transition" onclick="WuxianClient.resetDashboard()">新目标</button>
+      </div>
+    </header>
+
+    <!-- Landing -->
+    <section id="setup-view" class="glass rounded-[2rem] p-6 md:p-10 view-enter">
+      <div class="grid lg:grid-cols-2 gap-10 items-center">
+        <div>
+          <p class="text-xs font-black tracking-[0.3em] text-emerald-600 mb-4">STEP 01 · 锁定基线</p>
+          <h1 class="text-4xl md:text-5xl font-black leading-tight">把一个目标，压缩成今天能做的事。</h1>
+          <p class="mt-5 text-slate-600 leading-relaxed">承认疲惫与掉队。路径静默重算，不指责、不羞耻——你只管按当下状态往前走。</p>
+        </div>
+        <div class="glass rounded-2xl p-6 space-y-5">
+          <label class="block text-xs font-black tracking-widest text-slate-500">你的目标
+            <input id="goal-input" class="input-field" placeholder="90天托福破百" value="">
+          </label>
+          <label class="block text-xs font-black tracking-widest text-slate-500">可用天数
+            <input id="days-input" type="number" min="1" value="90" class="input-field">
+          </label>
+          <label class="block text-xs font-black tracking-widest text-slate-500">为什么必须完成？
+            <textarea id="drive-input" rows="2" class="input-field" placeholder="系统在低谷时用来唤醒你的理由"></textarea>
+          </label>
+          <button class="cta-launch" onclick="WuxianClient.launchFromForm()">生成今日路径</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 主看板 SPA -->
+    <section id="dashboard-view" class="hidden space-y-5 view-enter">
+
+      <!-- ① 顶层：状态仪表盘 -->
+      <div class="glass status-dashboard">
+        <div class="goal-block">
+          <p class="label">目标核心基线</p>
+          <h2 id="goal-title" class="goal-title"></h2>
+          <p id="decompose-note" class="mt-2 text-xs text-emerald-600 font-medium"></p>
+          <div class="goal-chips">
+            <span id="countdown" class="chip chip-green"></span>
+            <span id="category" class="chip chip-gray"></span>
+            <span id="stage-badge" class="chip chip-yellow hidden"></span>
+          </div>
+          <div id="route-log" class="mt-4 space-y-2 max-h-24 overflow-y-auto"></div>
+        </div>
+
+        <div class="metrics-grid">
+          <!-- 时间斜率 -->
+          <div class="metric-card">
+            <p class="metric-label">时间斜率</p>
+            <p id="slope-value" class="metric-num slope-num">0</p>
+            <svg class="slope-viz" viewBox="0 0 240 48" preserveAspectRatio="none">
+              <path id="slope-curve-path" d="M 0 40 Q 60 20 120 18 T 240 12" fill="none" stroke="#39ff14" stroke-width="2" class="pulse-track"/>
+            </svg>
+          </div>
+          <!-- 目标能量 -->
+          <div class="metric-card">
+            <p class="metric-label">剩余能量</p>
+            <div class="energy-bar-track"><div id="energy-bar" class="energy-bar-fill" style="width:100%"></div></div>
+            <p id="energy-value" class="mt-2 text-sm font-bold text-slate-600"></p>
+          </div>
+          <!-- 偏离风险 -->
+          <div class="metric-card">
+            <p class="metric-label">偏离风险</p>
+            <p id="risk-value" class="metric-num risk-calm">0%</p>
+            <svg width="48" height="48" style="position:absolute;bottom:8px;right:8px;opacity:0.3">
+              <circle id="risk-ring" cx="24" cy="24" r="20" fill="none" stroke="#39ff14" stroke-width="3" stroke-dasharray="80 40"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- ② 中层：今日原子任务 -->
+      <section class="glass atomic-section">
+        <div class="flex justify-between items-center mb-5">
+          <div>
+            <p class="text-[10px] font-black tracking-[0.28em] text-emerald-600">TODAY · 原子任务</p>
+            <h3 class="text-2xl font-black mt-1">只做这些，就够了</h3>
+          </div>
+          <span id="task-count" class="text-xs font-black px-3 py-1 rounded-full bg-slate-100 text-slate-500"></span>
+        </div>
+        <div id="task-list" class="space-y-4"></div>
+      </section>
+    </section>
+  </main>
+
+  <!-- ③ 底层：陪伴人格气泡（固定底部） -->
+  <div class="persona-dock">
+    <div id="persona-bubble" class="persona-bubble">
+      <div class="persona-header">
+        <span id="persona-orb" class="pulse-orb"></span>
+        <div>
+          <p class="text-[10px] font-black tracking-widest text-slate-400">随行外挂</p>
+          <h3 id="persona-name" class="persona-name">随行外挂</h3>
+        </div>
+      </div>
+      <p id="persona-speech" class="persona-speech">路径生成后，我会在这里陪你推进。</p>
+    </div>
+  </div>
+
+  <script src="/client/wuxian-client.js"></script>
+</body>
+</html>

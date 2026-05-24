@@ -1,0 +1,210 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://wuxian.studio/schema/data-contract.v1.json",
+  "title": "WUXIAN Core Data Contract",
+  "description": "双轴逆向拆解与动态重算引擎 · 冻结数据流契约 v1.0",
+  "definitions": {
+
+    "GoalBaseline": {
+      "type": "object",
+      "required": ["raw", "vector"],
+      "properties": {
+        "raw": {
+          "type": "string",
+          "description": "用户输入的终点锚点（文本/语音/图像转化后的目标描述）"
+        },
+        "vector": {
+          "$ref": "#/definitions/GoalVector"
+        }
+      }
+    },
+
+    "GoalVector": {
+      "type": "object",
+      "required": ["category", "nodes", "evolutionPath"],
+      "properties": {
+        "category": { "type": "string" },
+        "evolutionPath": { "type": "string" },
+        "nodes": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/KnowledgeNode" }
+        }
+      }
+    },
+
+    "KnowledgeNode": {
+      "type": "object",
+      "required": ["id", "type", "label", "weight"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": {
+          "enum": ["knowledge", "skill", "physical", "psychological", "milestone", "credential"]
+        },
+        "label": { "type": "string" },
+        "weight": { "type": "number", "minimum": 0, "maximum": 1 },
+        "prerequisites": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "TimeBaseline": {
+      "type": "object",
+      "required": ["totalDays", "isDeadlineFixed"],
+      "properties": {
+        "totalDays": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "时间锚点：总天数"
+        },
+        "isDeadlineFixed": {
+          "type": "boolean",
+          "description": "截止日是否绝对固定（高考/画展=true，减脂/习惯=false）"
+        },
+        "targetDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "currentDay": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        }
+      }
+    },
+
+    "EnergyMatrix": {
+      "type": "object",
+      "required": ["totalEnergyRequired", "remainingEnergy", "nodeEnergies"],
+      "properties": {
+        "totalEnergyRequired": {
+          "type": "number",
+          "minimum": 0,
+          "description": "总能量矩阵：达成梦想所需的加权总能量"
+        },
+        "remainingEnergy": {
+          "type": "number",
+          "minimum": 0,
+          "description": "剩余待消耗能量"
+        },
+        "consumedEnergy": {
+          "type": "number",
+          "minimum": 0
+        },
+        "nodeEnergies": {
+          "type": "object",
+          "additionalProperties": { "type": "number" },
+          "description": "nodeId → 该节点所需能量"
+        }
+      }
+    },
+
+    "TimeSlope": {
+      "type": "object",
+      "required": ["initialSlope", "currentSlope", "dailyEnergyKPI"],
+      "properties": {
+        "initialSlope": {
+          "type": "number",
+          "description": "初始斜率 = totalEnergy / totalDays"
+        },
+        "currentSlope": {
+          "type": "number",
+          "description": "当前有效斜率（Rerouting 后可能变化）"
+        },
+        "dailyEnergyKPI": {
+          "type": "number",
+          "description": "每日能量基准值"
+        },
+        "pressureCoefficient": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+
+    "Milestone": {
+      "type": "object",
+      "required": ["id", "label", "weekIndex", "targetEnergy", "status"],
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "weekIndex": { "type": "integer", "minimum": 0 },
+        "targetEnergy": { "type": "number" },
+        "status": {
+          "enum": ["pending", "active", "done", "blocked"]
+        }
+      }
+    },
+
+    "AtomTask": {
+      "type": "object",
+      "required": ["taskId", "taskDescription", "durationMinutes", "difficultyWeight", "scheduledDay"],
+      "properties": {
+        "taskId": { "type": "string" },
+        "taskDescription": { "type": "string" },
+        "durationMinutes": { "type": "number", "minimum": 1 },
+        "difficultyWeight": { "type": "number", "minimum": 0.1, "maximum": 1.0 },
+        "scheduledDay": { "type": "integer", "minimum": 0 },
+        "milestoneId": { "type": "string" },
+        "nodeId": { "type": "string" },
+        "completed": { "type": "boolean", "default": false }
+      }
+    },
+
+    "DreamSpace": {
+      "type": "object",
+      "required": ["id", "goalBaseline", "timeBaseline", "energyMatrix", "timeSlope", "milestones", "status"],
+      "properties": {
+        "id": { "type": "string" },
+        "goalBaseline": { "$ref": "#/definitions/GoalBaseline" },
+        "timeBaseline": { "$ref": "#/definitions/TimeBaseline" },
+        "energyMatrix": { "$ref": "#/definitions/EnergyMatrix" },
+        "timeSlope": { "$ref": "#/definitions/TimeSlope" },
+        "milestones": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Milestone" }
+        },
+        "status": {
+          "enum": ["INITIALIZED", "ACTIVE", "REROUTING", "COMPLETED", "CRITICAL"]
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+
+    "ReroutingInput": {
+      "type": "object",
+      "required": ["currentDay", "remainingEnergy", "todayCompleted"],
+      "properties": {
+        "currentDay": { "type": "integer", "minimum": 0 },
+        "remainingEnergy": { "type": "number", "minimum": 0 },
+        "todayCompleted": { "type": "boolean" },
+        "consecutiveFailDays": { "type": "integer", "minimum": 0, "default": 0 }
+      }
+    },
+
+    "ReroutingOutput": {
+      "type": "object",
+      "required": ["status", "strategy", "newDailySlope", "tomorrowTasks"],
+      "properties": {
+        "status": {
+          "enum": ["SILENT", "ADJUSTED", "EXTENDED", "CRITICAL"]
+        },
+        "strategy": {
+          "enum": ["redistribute", "compress", "extend", "reframe"]
+        },
+        "newDailySlope": { "type": "number" },
+        "adjustedTotalDays": { "type": "integer" },
+        "tomorrowTasks": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/AtomTask" }
+        },
+        "message": { "type": "string" }
+      }
+    }
+  },
+
+  "type": "object",
+  "required": ["dreamSpace"],
+  "properties": {
+    "dreamSpace": { "$ref": "#/definitions/DreamSpace" }
+  }
+}

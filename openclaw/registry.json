@@ -1,0 +1,80 @@
+{
+  "commander": "OpenClaw",
+  "version": "1.1.0",
+  "philosophy": "POINTER_ONLY_ZERO_STORAGE",
+  "tagline": "你只需要提创意思路，它负责落地。",
+  "skills": [
+    {
+      "id": "video_stream_sniff",
+      "name": "视频嗅探 Skill",
+      "tools": ["yt-dlp", "FFmpeg"],
+      "layer": "course_audit"
+    },
+    {
+      "id": "whisper_transcribe",
+      "name": "声纹转写 Skill",
+      "tools": ["Whisper", "FunASR"],
+      "layer": "course_audit"
+    },
+    {
+      "id": "multimodal_audit",
+      "name": "多模态审计 Skill",
+      "tools": ["Gemini 1.5 Pro"],
+      "layer": "course_audit"
+    },
+    {
+      "id": "graph_register",
+      "name": "知识挂网 Skill",
+      "tools": ["Neo4j", "Milvus"],
+      "layer": "course_audit"
+    },
+    {
+      "id": "shadow_browser_crawl",
+      "name": "影子浏览器探针",
+      "tools": ["Browser-Use", "Firecrawl", "Gemini Flash"],
+      "layer": "school_intel_L1"
+    },
+    {
+      "id": "market_sentiment_scan",
+      "name": "舆情聚合探针",
+      "tools": ["Tavily", "Jina Reader", "Google Search"],
+      "layer": "school_intel_L2"
+    },
+    {
+      "id": "partner_exam_gateway",
+      "name": "中介题库网关",
+      "tools": ["Partner API Gateway"],
+      "layer": "school_intel_L3a"
+    },
+    {
+      "id": "planner_crowdsource_ingest",
+      "name": "规划师众筹探针",
+      "tools": ["SaaS Upload Gate"],
+      "layer": "school_intel_L3b"
+    },
+    {
+      "id": "current_school_probe",
+      "name": "就读校重力探针",
+      "tools": ["OCR", "课表解析"],
+      "layer": "dual_gravity_L0"
+    },
+    {
+      "id": "target_school_probe",
+      "name": "目标校逃逸探针",
+      "tools": ["入学真题网关"],
+      "layer": "dual_gravity_L1"
+    },
+    {
+      "id": "exam_latex_crush",
+      "name": "考题 LaTeX 粉碎器",
+      "tools": ["Gemini Flash"],
+      "layer": "dual_gravity_L2"
+    },
+    {
+      "id": "dual_gravity_align",
+      "name": "双端重力场对齐",
+      "tools": ["价值匹配引擎"],
+      "layer": "dual_gravity_L3"
+    }
+  ]
+}

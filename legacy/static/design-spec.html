@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WUXIAN | 前端看板视觉设计规范</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Noto+Sans+SC:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-black: #000000;
+            --neon-green: #39FF14;
+            --lemon-yellow: #FFF01F;
+            --sunset-orange: #FF5E00;
+            --text-white: #FFFFFF;
+            --text-gray: #888888;
+            --fine-line: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            background-color: var(--bg-black);
+            color: var(--text-white);
+            font-family: 'Plus Jakarta Sans', 'Noto Sans SC', sans-serif;
+            line-height: 1.6;
+        }
+
+        .gradient-text {
+            background: linear-gradient(90deg, var(--neon-green), var(--lemon-yellow), var(--sunset-orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--fine-line);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+        }
+
+        .spec-section {
+            border-bottom: 1px solid var(--fine-line);
+            padding: 4rem 0;
+        }
+
+        code {
+            background: #1a1a1a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: var(--lemon-yellow);
+        }
+    </style>
+</head>
+<body class="p-8 md:p-20">
+
+    <header class="mb-20">
+        <h1 class="text-6xl font-extrabold tracking-tighter mb-4">WUXIAN <span class="text-2xl font-light tracking-widest ml-4 text-gray-500">Visual Design Spec v1.0</span></h1>
+        <p class="text-xl text-gray-400 max-w-2xl">
+            基于"无限"理念的日系极简主义前端视觉规范。强调极细的线条感、高饱和度的光影以及充满生机的留白。
+        </p>
+    </header>
+
+    <section class="spec-section">
+        <h2 class="text-3xl font-bold mb-10 gradient-text italic">01. 核心色彩体系 / Color System</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="space-y-2">
+                <div class="h-32 w-full bg-black border border-white/20 rounded-2xl"></div>
+                <p class="font-bold">Deep Space Black</p>
+                <p class="text-sm text-gray-500">#000000</p>
+                <p class="text-xs text-gray-600 italic">底色：绝对的纯净与深邃</p>
+            </div>
+            <div class="space-y-2">
+                <div class="h-32 w-full bg-[#39FF14] rounded-2xl shadow-[0_0_20px_rgba(57,255,20,0.4)]"></div>
+                <p class="font-bold">Neo Green</p>
+                <p class="text-sm text-gray-500">#39FF14</p>
+                <p class="text-xs text-gray-600 italic">动能：生机勃勃的起始</p>
+            </div>
+            <div class="space-y-2">
+                <div class="h-32 w-full bg-[#FFF01F] rounded-2xl shadow-[0_0_20px_rgba(255,240,31,0.4)]"></div>
+                <p class="font-bold">Lemon Yellow</p>
+                <p class="text-sm text-gray-500">#FFF01F</p>
+                <p class="text-xs text-gray-600 italic">光辉：视觉的转折中心</p>
+            </div>
+            <div class="space-y-2">
+                <div class="h-32 w-full bg-[#FF5E00] rounded-2xl shadow-[0_0_20px_rgba(255,94,0,0.4)]"></div>
+                <p class="font-bold">Vibrant Orange</p>
+                <p class="text-sm text-gray-500">#FF5E00</p>
+                <p class="text-xs text-gray-600 italic">能量：充满力量的延伸</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="spec-section">
+        <h2 class="text-3xl font-bold mb-10 gradient-text italic">02. 字体与排版 / Typography</h2>
+        <div class="space-y-8">
+            <div>
+                <h3 class="text-gray-500 mb-4 uppercase tracking-widest text-sm text-gray-500 italic">Brand Typeface (English)</h3>
+                <p class="text-5xl font-extrabold tracking-[0.35em]">WUXIAN DESIGN</p>
+                <p class="mt-2 text-gray-400">Font: <code>Plus Jakarta Sans (ExtraBold 800)</code> / Letter-spacing: <code>0.35em</code></p>
+            </div>
+            <div>
+                <h3 class="text-gray-500 mb-4 uppercase tracking-widest text-sm text-gray-500 italic">Body Copy (Chinese)</h3>
+                <p class="text-2xl font-light">追求极致的极简，在留白中感受无限。/ <code>Noto Sans SC (Light 300)</code></p>
+            </div>
+        </div>
+    </section>
+
+    <section class="spec-section">
+        <h2 class="text-3xl font-bold mb-10 gradient-text italic">03. UI 元素设计语言 / UI Elements</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div class="glass-card p-10">
+                <h4 class="text-gray-500 text-xs mb-6 uppercase tracking-tighter italic">Data Card / 数据看板卡片</h4>
+                <div class="h-1 bg-gradient-to-r from-[#39FF14] via-[#FFF01F] to-[#FF5E00] w-20 mb-6"></div>
+                <p class="text-4xl font-bold mb-2">24,850</p>
+                <p class="text-gray-500 text-sm">TOTAL VISITS / 全球实时访问</p>
+            </div>
+            <div class="flex flex-col justify-center space-y-6">
+                <div>
+                    <span class="text-sm text-gray-400 italic font-light">Border Width: </span>
+                    <span class="font-mono text-lemon-yellow">0.5px - 1px (Hairline)</span>
+                </div>
+                <div>
+                    <span class="text-sm text-gray-400 italic font-light">Border Radius: </span>
+                    <span class="font-mono text-lemon-yellow">24px - 32px (Large Rounded)</span>
+                </div>
+                <div>
+                    <button class="px-8 py-3 rounded-full border border-[#39FF14] text-[#39FF14] text-xs font-bold tracking-widest hover:bg-[#39FF14] hover:text-black transition-all">
+                        ENTER INFINITY
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="spec-section border-none">
+        <h2 class="text-3xl font-bold mb-10 gradient-text italic">04. 动效哲学 / Motion Language</h2>
+        <ul class="space-y-4 text-gray-300">
+            <li class="flex items-start">
+                <span class="text-lemon-yellow mr-4">✦</span>
+                <span><strong>线性渐进：</strong> 所有线条的出现应使用 <code>cubic-bezier(0.4, 0, 0.2, 1)</code> 缓动函数。</span>
+            </li>
+            <li class="flex items-start">
+                <span class="text-lemon-yellow mr-4">✦</span>
+                <span><strong>呼吸感：</strong> 关键 UI 元素可带有微弱的渐变呼吸效果（Opacity 0.3 - 0.7）。</span>
+            </li>
+            <li class="flex items-start">
+                <span class="text-lemon-yellow mr-4">✦</span>
+                <span><strong>极轻量：</strong> 交互反馈不应有沉重的位移，仅通过线条变亮或缩放（1.02x）体现。</span>
+            </li>
+        </ul>
+    </section>
+
+    <footer class="mt-20 opacity-30 text-xs tracking-widest uppercase italic">
+        © 2024 WUXIAN STUDIO. ALL RIGHTS RESERVED.
+    </footer>
+
+</body>
+</html>

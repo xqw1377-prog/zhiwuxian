@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WUXIAN // 目标操作系统</title>
+  <link rel="stylesheet" href="/wuxian-spec.css">
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body class="wuxian-grid">
+  <div class="shell">
+    <div id="wuxian-app" class="container" :class="{ 'wormhole-warp-effect': isWarping }">
+      <header class="hairline-card" style="padding:14px 16px">
+        <div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-end;flex-wrap:wrap">
+          <div style="min-width:260px">
+            <span class="chip mono">Current Baseline</span>
+            <h1 class="title">{{ goalTitle }} <span class="muted mono" style="font-size:12px;margin-left:10px">Lnt.{{ remainingDays }}d</span></h1>
+            <div class="muted-2 mono" style="font-size:12px;margin-top:6px">{{ sessionId ? `SESSION // ${sessionId}` : 'SESSION // BOOTING' }}</div>
+            <div class="muted-2 mono" style="font-size:12px;margin-top:6px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <span>{{ creditsText }}</span>
+              <button class="cta mono" style="padding:6px 10px" @click="refreshCredits" :disabled="busy || !sessionId">刷新</button>
+              <button class="cta mono" style="padding:6px 10px" @click="topUp100" :disabled="busy || !sessionId">补充+100</button>
+              <button class="cta mono" style="padding:6px 10px" @click="generateRadar" :disabled="busy || !sessionId">生成雷达卡</button>
+              <button class="cta mono" style="padding:6px 10px" @click="openPoster" :disabled="busy || !sessionId">打开海报</button>
+              <button class="cta mono" style="padding:6px 10px" @click="generateCertificate" :disabled="busy || !sessionId">生成证书</button>
+              <button class="cta mono" style="padding:6px 10px" @click="unlockCertificate" :disabled="busy || !reportId">模拟解锁</button>
+              <button class="cta mono" style="padding:6px 10px" @click="openCertificate" :disabled="busy || !certificateUrl">打开证书</button>
+            </div>
+          </div>
+          <div class="kpis">
+            <div class="kpi">
+              <div class="label mono">TimeSlope</div>
+              <div class="value mono slope-indicator normal">{{ timeSlope.toFixed(2) }}</div>
+            </div>
+            <div class="kpi">
+              <div class="label mono">Assimilation</div>
+              <div class="value mono" style="color:var(--cyber-neon);text-shadow:0 0 12px rgba(0,240,255,0.25)">{{ Math.round(assimilationRate * 100) }}%</div>
+            </div>
+            <div class="kpi">
+              <div class="label mono">Risk</div>
+              <div class="value mono" :class="deviationRisk > 50 ? 'risk-indicator crisis' : 'muted'">{{ deviationRisk }}%</div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section v-if="radarCard" class="hairline-card" style="padding:14px 16px">
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start">
+          <div style="min-width:260px">
+            <div class="chip mono">Radar Card</div>
+            <div class="title" style="margin-top:8px;font-size:16px">{{ radarCard.highlights?.[0] ?? '认知雷达已生成' }}</div>
+            <div class="muted-2 mono" style="font-size:12px;margin-top:6px">window={{ radarCard.windowDays }}d · generated={{ radarCard.generatedAt }}</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start">
+            <div v-for="axis in radarCard.axes" :key="axis.key" class="hairline-card" style="padding:10px 12px;background:rgba(0,0,0,0.14);min-width:140px">
+              <div class="muted-2 mono" style="font-size:11px;letter-spacing:0.08em">{{ axis.label }}</div>
+              <div class="mono" style="font-size:18px;margin-top:6px;color:rgba(0,240,255,0.9)">{{ Math.round(axis.value * 100) }}%</div>
+            </div>
+          </div>
+        </div>
+        <div v-if="radarCard.evidence?.length" class="hairline-row" style="padding-top:12px;margin-top:12px">
+          <div class="muted-2 mono" style="font-size:12px;letter-spacing:0.18em;text-transform:uppercase">Evidence</div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+            <div v-for="e in radarCard.evidence.slice(0,3)" :key="e.ts + e.type" class="mono" style="font-size:12px;color:rgba(226,232,240,0.78)">
+              <span style="color:rgba(0,240,255,0.85)">{{ e.type }}</span>
+              <span style="color:rgba(226,232,240,0.35)"> · {{ e.ts.slice(0,19).replace('T',' ') }}</span>
+              <span> · {{ e.summary }}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section v-if="reportId" class="hairline-card" style="padding:14px 16px">
+        <div class="chip mono">Cognitive Certificate</div>
+        <div style="margin-top:10px;display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+          <div class="mono muted" style="font-size:12px">REPORT_ID: <span style="color:rgba(0,240,255,0.9)">{{ reportId.slice(0, 8) }}</span></div>
+          <div class="mono muted" style="font-size:12px">STATUS: <span style="color:rgba(226,232,240,0.85)">{{ certificateStatus }}</span></div>
+          <div class="mono muted" style="font-size:12px">{{ reportMsg }}</div>
+        </div>
+        <div v-if="certificateUrl" class="mono muted-2" style="font-size:12px;margin-top:10px;word-break:break-all">{{ certificateUrl }}</div>
+      </section>
+
+      <main class="layout">
+        <section class="hairline-card video-box">
+          <div class="video-frame">
+            <div class="center">
+              <div class="muted" style="font-size:13px;letter-spacing:0.06em">零存储物理指针路由 // 正在解析公开课程</div>
+              <div class="mono" style="font-size:12px;color:rgba(0,240,255,0.85)">Current Timestamp: {{ videoTimestamp }}s (Node: {{ currentNodeTitle }})</div>
+              <div class="muted-2 mono" style="font-size:12px">Clip: {{ clipLabel }}</div>
+            </div>
+          </div>
+
+          <div class="hairline-row" style="padding-top:12px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+            <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center">
+              <div class="mono muted" style="font-size:12px">播放速度: <span style="color:var(--text)">{{ telemetry.playSpeed.toFixed(1) }}x</span></div>
+              <div class="mono muted" style="font-size:12px">主动跳过次数: <span style="color:var(--text)">{{ telemetry.skipCount }}</span></div>
+              <div class="mono muted" style="font-size:12px">敏感度阈值: <span style="color:var(--text)">{{ minWormholeValue.toFixed(2) }}</span></div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="cta mono" @click="triggerSimulatedQuiz(1.0, 450)" :disabled="busy">
+                模拟高敏答题 (100% / 450ms)
+              </button>
+              <button class="cta mono" @click="bumpTelemetry" :disabled="busy">
+                微观遥测 +1
+              </button>
+            </div>
+          </div>
+
+          <div class="hairline-row" style="padding-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <div class="mono muted" style="font-size:12px">Topic</div>
+            <input v-model="topic" class="hairline-card mono" style="flex:1;min-width:220px;padding:10px 12px;background:rgba(0,0,0,0.18);border-radius:10px" placeholder="输入主题，例如 matrix / topology / 特征向量">
+            <input v-model.number="minWormholeValue" type="range" min="0" max="1" step="0.05" style="width:180px">
+            <button class="cta mono" @click="resolveClip" :disabled="busy || !topic.trim()">解析切片</button>
+          </div>
+
+          <div class="hairline-row" style="padding-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <div class="mono muted" style="font-size:12px">Morning</div>
+            <input v-model="utteranceText" class="hairline-card mono" style="flex:1;min-width:260px;padding:10px 12px;background:rgba(0,0,0,0.18);border-radius:10px" placeholder="随口一句：昨晚通宵…今天头晕…">
+            <input v-model.number="fatigue" type="range" min="0" max="1" step="0.05" style="width:160px">
+            <button class="cta mono" @click="sendUtterance" :disabled="busy || !utteranceText.trim()">航线对齐</button>
+          </div>
+        </section>
+
+        <aside class="task-col">
+          <div class="muted-2 mono" style="font-size:12px;letter-spacing:0.18em;text-transform:uppercase;padding-left:2px">Atomic Action Today</div>
+          <div v-for="task in todayTasks" :key="task.id" class="hairline-card task-card">
+            <div>
+              <div class="mono" style="font-size:12px;color:rgba(0,240,255,0.75)">NODE_INDEX: {{ task.index }}</div>
+              <div style="margin-top:10px;font-size:13px;line-height:1.55;letter-spacing:0.02em">{{ task.content }}</div>
+              <div class="muted-2 mono" style="margin-top:8px;font-size:12px">{{ task.scheduledAt }}</div>
+            </div>
+            <div class="task-actions">
+              <button class="btn-ok mono" @click="completeTask(task.id)" :disabled="busy">已同化</button>
+              <button class="btn-bad mono" @click="requestReroute(task.id)" :disabled="busy">太难</button>
+            </div>
+          </div>
+          <div v-if="todayTasks.length === 0" class="hairline-card task-card">
+            <div class="muted mono" style="font-size:12px">暂无今日任务。先初始化目标，或触发一次重算。</div>
+            <div class="task-actions">
+              <button class="cta mono" @click="boot" :disabled="busy">初始化</button>
+              <button class="cta mono" @click="manualReroute" :disabled="busy || !sessionId">重算</button>
+            </div>
+          </div>
+        </aside>
+      </main>
+
+      <footer class="hairline-card footer">
+        <div class="pulse-dot"></div>
+        <div style="flex:1;min-width:0">
+          <div class="mono" style="font-size:12px;color:rgba(0,240,255,0.95);letter-spacing:0.12em">[{{ currentPersona }}]</div>
+          <div style="font-size:13px;line-height:1.45;color:rgba(226,232,240,0.88)">{{ companionSpeech }}</div>
+        </div>
+        <div class="mono muted-2" style="font-size:12px;white-space:nowrap">{{ statusBadge }}</div>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    const { createApp, ref, computed, onMounted } = Vue;
+
+    createApp({
+      setup() {
+        const sessionId = ref('');
+        const goalTitle = ref('90天托福破百');
+        const totalDays = ref(90);
+        const remainingDays = ref(90);
+        const timeSlope = ref(1.2);
+        const assimilationRate = ref(0.85);
+        const deviationRisk = ref(0);
+        const isWarping = ref(false);
+        const busy = ref(false);
+
+        const videoTimestamp = ref(120);
+        const currentNodeTitle = ref('特征向量的几何本质');
+        const clipLabel = ref('NULL');
+        const courseId = ref('');
+
+        const currentPersona = ref('COACH');
+        const companionSpeech = ref('正在实时感知行为波形。你负责专注，路径调整交给我。');
+        const statusBadge = computed(() => sessionId.value ? 'LIVE' : 'BOOT');
+
+        const todayTasks = ref([]);
+        const telemetry = ref({ playSpeed: 1.5, skipCount: 1 });
+        const topic = ref('matrix');
+        const minWormholeValue = ref(0.5);
+        const utteranceText = ref('');
+        const fatigue = ref(0.35);
+        const reportId = ref('');
+        const reportMsg = ref('');
+        const certificateUrl = ref('');
+        const certificateStatus = ref('LOCKED');
+        const credits = ref(null);
+        const radarCard = ref(null);
+        const creditsText = computed(() => {
+          if (!sessionId.value) return 'CREDITS // BOOTING';
+          if (!credits.value) return 'CREDITS // ...';
+          return `CREDITS // ${credits.value.credits}`;
+        });
+
+        const API_BASE = (() => {
+          try {
+            if (window.location.protocol === 'file:') return 'http://localhost:3401';
+          } catch (_) {}
+          return '';
+        })();
+
+        function api(path) {
+          return `${API_BASE}${path}`;
+        }
+
+        function normalizeTasks(apiTasks) {
+          const list = Array.isArray(apiTasks) ? apiTasks : [];
+          return list.map((t, i) => ({
+            id: t.id ?? `t-${i}`,
+            index: i + 1,
+            content: t.desc ?? t.content ?? '',
+            scheduledAt: t.scheduledAt ?? t.sequence_date ?? '',
+            status: t.status ?? '',
+          }));
+        }
+
+        function persistSession(id) {
+          try {
+            if (id) localStorage.setItem('wuxian:sessionId', id);
+          } catch (_) {}
+        }
+
+        function readPersistedSession() {
+          try {
+            return (localStorage.getItem('wuxian:sessionId') ?? '').trim();
+          } catch (_) {
+            return '';
+          }
+        }
+
+        async function loadDashboard(goalId) {
+          const res = await fetch(api(`/api/v1/goal/${encodeURIComponent(goalId)}/dashboard`));
+          const json = await res.json().catch(() => ({}));
+          const data = json?.data ?? json;
+          if (!res.ok) throw new Error(data?.error ?? 'DASHBOARD_FAILED');
+
+          sessionId.value = String(data.sessionId ?? data.goalId ?? goalId);
+          persistSession(sessionId.value);
+
+          const vector = String(data.goalVector ?? data.goalTitle ?? data.goal?.title ?? goalTitle.value);
+          if (vector) goalTitle.value = vector;
+
+          const td = Number(data.totalDays ?? data.durationDays ?? data.goal?.duration_days ?? totalDays.value);
+          if (!Number.isNaN(td) && td > 0) totalDays.value = td;
+
+          const rd = Number(data.remainingDays ?? data.goal?.remaining_days ?? remainingDays.value);
+          if (!Number.isNaN(rd) && rd >= 0) remainingDays.value = rd;
+
+          const slope = Number.parseFloat(String(data.timeSlope ?? data.goal?.current_slope ?? timeSlope.value));
+          if (!Number.isNaN(slope)) timeSlope.value = slope;
+
+          const risk = Number(data.deviationRisk ?? deviationRisk.value);
+          if (!Number.isNaN(risk)) deviationRisk.value = risk;
+
+          todayTasks.value = normalizeTasks(data.todayTasks ?? data.tasks ?? []);
+
+          const persona = data.persona ?? null;
+          if (persona?.greeting) companionSpeech.value = String(persona.greeting);
+          if (persona?.id) currentPersona.value = String(persona.id).toUpperCase();
+        }
+
+        async function ingestTelemetry(type, payload) {
+          if (!sessionId.value) return;
+          try {
+            await fetch(api('/api/v1/telemetry/ingest'), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: sessionId.value,
+                sessionId: sessionId.value,
+                events: [{ ts: new Date().toISOString(), type, payload }]
+              })
+            });
+          } catch (_) {}
+        }
+
+        async function refreshCredits() {
+          if (!sessionId.value) return;
+          try {
+            const res = await fetch(api(`/api/v1/credits/${encodeURIComponent(sessionId.value)}`));
+            const json = await res.json();
+            if (res.ok) credits.value = json.data ?? json;
+          } catch (_) {}
+        }
+
+        async function topUp100() {
+          if (!sessionId.value) return;
+          busy.value = true;
+          try {
+            const res = await fetch(api(`/api/v1/credits/${encodeURIComponent(sessionId.value)}/topup`), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ credits: 100 })
+            });
+            const json = await res.json();
+            if (res.ok) credits.value = json.data ?? json;
+          } catch (_) {
+            companionSpeech.value = '补充失败：服务暂不可用。';
+          } finally {
+            busy.value = false;
+          }
+        }
+
+        async function generateRadar() {
+          if (!sessionId.value) return;
+          busy.value = true;
+          try {
+            const res = await fetch(api(`/api/v1/report/radar/${encodeURIComponent(sessionId.value)}?windowDays=30`));
+            const json = await res.json();
+            if (!res.ok) throw new Error(json?.error ?? 'REPORT_FAILED');
+            radarCard.value = json.data ?? null;
+          } catch (_) {
+            companionSpeech.value = '报告生成失败：请稍后再试。';
+          } finally {
+            busy.value = false;
+          }
+        }
+
+        function openPoster() {
+          if (!sessionId.value) return;
+          const url = api(`/api/v1/report/radar/${encodeURIComponent(sessionId.value)}/poster.svg?windowDays=30`);
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }
+
+        async function generateCertificate() {
+          if (!sessionId.value) return;
+          busy.value = true;
+          try {
+            const res = await fetch(api('/api/v1/report/generate'), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: sessionId.value,
+                sessionId: sessionId.value,
+                courseId: courseId.value || undefined
+              })
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json?.error ?? 'REPORT_GEN_FAILED');
+            const d = json.data ?? null;
+            reportId.value = d?.reportId ?? '';
+            reportMsg.value = d?.msg ?? '';
+            certificateUrl.value = '';
+            certificateStatus.value = d?.isUnlocked ? 'UNLOCKED' : (d?.paymentRequired ? 'LOCKED' : 'READY');
+          } catch (_) {
+            companionSpeech.value = '证书生成失败：服务暂不可用。';
+          } finally {
+            busy.value = false;
+          }
+        }
+
+        async function unlockCertificate() {
+          if (!sessionId.value || !reportId.value) return;
+          busy.value = true;
+          try {
+            const orderRes = await fetch(api(`/api/v1/report/cognitive/${encodeURIComponent(reportId.value)}/unlock`), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: sessionId.value })
+            });
+            const orderJson = await orderRes.json();
+            if (!orderRes.ok) throw new Error(orderJson?.error ?? 'ORDER_FAILED');
+            const orderId = orderJson.data?.order?.orderId;
+            if (!orderId) throw new Error('ORDER_ID_MISSING');
+
+            const payRes = await fetch(api('/api/v1/payment/confirm'), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ orderId })
+            });
+            const payJson = await payRes.json();
+            if (!payRes.ok) throw new Error(payJson?.error ?? 'PAY_FAILED');
+
+            const repRes = await fetch(api(`/api/v1/report/cognitive/${encodeURIComponent(reportId.value)}?userId=${encodeURIComponent(sessionId.value)}`));
+            const repJson = await repRes.json();
+            if (!repRes.ok) throw new Error(repJson?.error ?? 'REPORT_FETCH_FAILED');
+            const rep = repJson.data ?? null;
+            if (rep?.isUnlocked && rep?.shareUrl) {
+              certificateUrl.value = rep.shareUrl;
+              certificateStatus.value = 'UNLOCKED';
+              reportMsg.value = rep.msg ?? reportMsg.value;
+            } else {
+              certificateStatus.value = 'LOCKED';
+            }
+          } catch (_) {
+            companionSpeech.value = '证书解锁失败：请稍后再试。';
+          } finally {
+            busy.value = false;
+          }
+        }
+
+        function openCertificate() {
+          if (!certificateUrl.value) return;
+          window.open(certificateUrl.value, '_blank', 'noopener,noreferrer');
+        }
+
+        async function boot() {
+          busy.value = true;
+          companionSpeech.value = '正在锁定目标锚点并建立双轴坐标系...';
+          try {
+            const res = await fetch(api('/api/v1/goal/deconstruct'), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                goal: goalTitle.value,
+                totalDays: totalDays.value,
+                currentStatus: '零基础',
+                isDeadlineFixed: true,
+                driveSource: { why: '进化而非上课', intensity: 0.8 },
+                templateId: 'TOEFL_90_PRO'
+              })
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json?.error ?? 'BOOT_FAILED');
+            sessionId.value = json.data.sessionId ?? '';
+            persistSession(sessionId.value);
+            timeSlope.value = Number(json.data.timeSlope ?? timeSlope.value) || timeSlope.value;
+            deviationRisk.value = Number(json.data.deviationRisk ?? deviationRisk.value) || deviationRisk.value;
+            todayTasks.value = normalizeTasks(json.data.todayTasks);
+            companionSpeech.value = json.data.persona?.greeting ?? '坐标系已建立。';
+            currentPersona.value = (json.data.persona?.id ?? 'COACH').toUpperCase();
+
+            try {
+              const r = await fetch(api('/api/v1/video/assimilate'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: sessionId.value, simulate: true, autoReserve: true })
+              });
+              const j = await r.json().catch(() => null);
+              if (!r.ok) {
+                companionSpeech.value = j?.error ? `算力不足：${j.error}` : '算力不足：请补充 credits 后再试。';
+              } else {
+                const data = j?.data ?? null;
+                if (data?.courseId) courseId.value = data.courseId;
+                if (typeof data?.report?.knowledgeCells?.[0]?.timestampStart === 'number') {
+                  videoTimestamp.value = data.report.knowledgeCells[0].timestampStart;
+                }
+                await ingestTelemetry('VIDEO_ASSIMILATION', {
+                  videoId: data?.report?.videoId,
+                  grade: data?.report?.overallGrade,
+                  foldRate: data?.report?.spatialFoldRate,
+                  billing: data?.billing,
+                });
+              }
+            } catch (_) {}
+            await refreshCredits();
+            await ingestTelemetry('BOOT', { goal: goalTitle.value, totalDays: totalDays.value });
+          } catch (e) {
+            sessionId.value = '';
+            companionSpeech.value = '离线演示模式：启动 server 后自动联调。';
+          } finally {
+            busy.value = false;
+          }
+        }
+
+        async function rerouteWithoutTask(userSignal) {
+          if (!sessionId.value) return;
+          const res = await fetch(api('/api/v1/goal/reroute'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sessionId: sessionId.value,
+              todayCompleted: false,
+              userSignal
+            })
+          });
+          const json = await res.json().catch(() => ({}));
+          const data = json?.data ?? json;
+          if (!res.ok) throw new Error(data?.error ?? 'REROUTE_FAILED');
+          const nextSlope = Number.parseFloat(String(data.newTimeSlope ?? data.timeSlope ?? timeSlope.value));
+          if (!Number.isNaN(nextSlope)) timeSlope.value = nextSlope;
+          if (data.message) companionSpeech.value = String(data.message);
+        }
+
+        async function updateTask(taskId, status, reason) {
+          if (!sessionId.value) return;
+          const res = await fetch(api('/api/v1/task/update'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              goalId: sessionId.value,
+              taskId,
+              status,
+              reason
+            })
+          });
+          const json = await res.json().catch(() => ({}));
+          const data = json?.data ?? json;
+          if (!res.ok) throw new Error(data?.error ?? 'TASK_UPDATE_FAILED');
+          const nextSlope = Number.parseFloat(String(data.newTimeSlope ?? data.timeSlope ?? timeSlope.value));
+          if (!Number.isNaN(nextSlope)) timeSlope.value = nextSlope;
+          if (data.message) companionSpeech.value = String(data.message);
+          if (data.persona?.id) currentPersona.value = String(data.persona.id).toUpperCase();
+        }
+
+        async function completeTask(taskId) {
+          busy.value = true;
+          try {
+            await updateTask(taskId, 'DONE');
+            await loadDashboard(sessionId.value);
+            assimilationRate.value = Math.min(1, assimilationRate.value + 0.03);
+            deviationRisk.value = Math.max(0, 100 - Math.round(assimilationRate.value * 100));
+            await ingestTelemetry('TASK_COMPLETED', { taskId });
+          } catch (e) {
+            companionSpeech.value = '重算链路中断。稍后再试。';
+          } finally {
+            busy.value = false;
+          }
+        }
+
+        async function requestReroute(taskId) {
+          busy.value = true;
+          try {
+            await updateTask(taskId, 'FAILED', '太难');
+            await loadDashboard(sessionId.value);
+            assimilationRate.value = Math.max(0.2, assimilationRate.value - 0.04);
+            deviationRisk.value = Math.min(100, 100 - Math.round(assimilationRate.value * 100));
+            await ingestTelemetry('TASK_REROUTE', { taskId, reason: 'too_hard' });
+          } catch (e) {
+            companionSpeech.value = '重算链路中断。稍后再试。';
+          } finally {
+            busy.value = false;
+          }
+        }
+
+        async function manualReroute() {
+          busy.value = true;
+          try {
+            await rerouteWithoutTask('manual');
+            await loadDashboard(sessionId.value);
+            await ingestTelemetry('TASK_REROUTE', { reason: 'manual' });
+          } catch (_) {
+            companionSpeech.value = '重算链路中断。稍后再试。';
+          } finally {
+            busy.value = false;
+          }
+        }
+
+        function bumpTelemetry() {
+          telemetry.value.skipCount += 1;
+          telemetry.value.playSpeed = Math.min(2.5, telemetry.value.playSpeed + 0.1);
+          companionSpeech.value = '遥测波形已记录。';
+          ingestTelemetry('PLAYBACK', { playSpeed: telemetry.value.playSpeed, skipCount: telemetry.value.skipCount });
+        }
+
+        async function resolveClip() {
+          busy.value = true;
+          companionSpeech.value = '正在从认知储备库解析 3 分钟精准切片...';
+          try {
+            const res = await fetch(api('/api/v1/video/resolve-clip'), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: sessionId.value,
+                courseId: courseId.value || undefined,
+                currentTimestamp: courseId.value ? videoTimestamp.value : undefined,
+                telemetryData: courseId.value ? {
+                  playSpeed: telemetry.value.playSpeed,
+                  skipCount: telemetry.value.skipCount,
+                  quizScore: 1.0,
+                  interactionLatency: 450,
+                } : undefined,
+                topic: topic.value,
+                minWormholeValue: minWormholeValue.value
+              })
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json?.error ?? 'RESOLVE_FAILED');
+            const d = json.data ?? {};
+            if (d.event === 'WORMHOLE_ACTIVATED' || d.event === 'CONTINUE_PLAYBACK') {
+              const meta = d.meta ?? {};
+              const metrics = meta.metrics ?? {};
+              const il = typeof metrics.IL === 'number' ? metrics.IL : 0.5;
+              const ps = typeof metrics.PS === 'number' ? metrics.PS : 0.5;
+              const ar = typeof meta.assimilationRate === 'number' ? meta.assimilationRate : (il * 0.6 + ps * 0.4);
+
+              if (d.currentNode?.title) currentNodeTitle.value = d.currentNode.title;
+
+              assimilationRate.value = Math.max(0, Math.min(1, ar));
+              deviationRisk.value = Math.min(100, Math.max(0, 100 - Math.round(ar * 100)));
+              timeSlope.value = Math.max(0.1, 0.8 + ar * 1.4);
+
+              if (d.event === 'WORMHOLE_ACTIVATED') {
+                isWarping.value = true;
+                setTimeout(() => { isWarping.value = false; }, 1200);
+                ingestTelemetry('WORMHOLE_WARP', { source: 'pointer', topic: topic.value, courseId: courseId.value });
+                if (typeof d.redirectToSeconds === 'number') {
+                  videoTimestamp.value = d.redirectToSeconds;
+                }
+                clipLabel.value = `WORMHOLE · IL${Math.round(il * 100)} PS${Math.round(ps * 100)}`;
+              } else {
+                clipLabel.value = `SCAN · IL${Math.round(il * 100)} PS${Math.round(ps * 100)}`;
+              }
+              companionSpeech.value = meta.speech ?? companionSpeech.value;
+            } else if (d.event === 'LEGACY_CLIP') {
+              const clip = d.meta?.clip ?? null;
+              if (!clip) {
+                companionSpeech.value = d.meta?.message ?? '暂无匹配切片。';
+                clipLabel.value = 'NOT_FOUND';
+                return;
+              }
+
+              isWarping.value = true;
+              setTimeout(() => { isWarping.value = false; }, 1200);
+              ingestTelemetry('WORMHOLE_WARP', { source: 'clip', topic: topic.value });
+
+              videoTimestamp.value = clip.timestampStart ?? videoTimestamp.value;
+              currentNodeTitle.value = clip.cellName ?? currentNodeTitle.value;
+              clipLabel.value = `${clip.durationSeconds ?? ''}s · ${(Math.round((clip.wormholeValue ?? 0) * 100))}%`;
+
+              const w = Number(clip.wormholeValue ?? 0.5);
+              assimilationRate.value = Math.max(0, Math.min(1, w));
+              deviationRisk.value = Math.min(100, Math.max(0, 100 - Math.round(w * 100)));
+              timeSlope.value = Math.max(0.1, timeSlope.value + (w - 0.5) * 0.8);
+              companionSpeech.value = clip.message ?? '切片已投射。';
+            } else {
+              companionSpeech.value = '解析失败：未知事件。';
+              clipLabel.value = 'UNKNOWN';
+            }
+            await refreshCredits();
+          } catch (e) {
+            companionSpeech.value = '解析失败：服务暂不可用。';
+          } finally {
+            busy.value = false;
+          }
+        }
+
+        async function sendUtterance() {
+          busy.value = true;
+          try {
+            const res = await fetch(api('/api/v1/edge/utterance'), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: sessionId.value,
+                sessionId: sessionId.value,
+                text: utteranceText.value,
+                fatigue: fatigue.value,
+              })
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json?.error ?? 'UTTERANCE_FAILED');
+            companionSpeech.value = json.data?.speech ?? companionSpeech.value;
+            currentPersona.value = (json.data?.persona ?? currentPersona.value).toUpperCase();
+          } catch (_) {
+            companionSpeech.value = '航线对齐失败：服务暂不可用。';
+          } finally {
+            busy.value = false;
+          }
+        }
+
+        async function triggerSimulatedQuiz(score, latency) {
+          telemetry.value.skipCount += score >= 1 ? 0 : 1;
+          telemetry.value.playSpeed = Math.max(0.8, Math.min(2.5, telemetry.value.playSpeed + (score - 0.5) * 0.2));
+          ingestTelemetry('QUIZ', { score, latencyMs: latency, playSpeed: telemetry.value.playSpeed, skipCount: telemetry.value.skipCount });
+          await resolveClip();
+        }
+
+        onMounted(() => {
+          const cached = readPersistedSession();
+          if (cached) {
+            loadDashboard(cached)
+              .then(() => refreshCredits())
+              .catch(() => boot());
+            return;
+          }
+          boot();
+        });
+
+        return {
+          sessionId,
+          goalTitle,
+          remainingDays,
+          totalDays,
+          timeSlope,
+          assimilationRate,
+          deviationRisk,
+          isWarping,
+          busy,
+          videoTimestamp,
+          currentNodeTitle,
+          clipLabel,
+          currentPersona,
+          companionSpeech,
+          statusBadge,
+          todayTasks,
+          telemetry,
+          topic,
+          minWormholeValue,
+          utteranceText,
+          fatigue,
+          creditsText,
+          radarCard,
+          reportId,
+          reportMsg,
+          certificateUrl,
+          certificateStatus,
+          boot,
+          bumpTelemetry,
+          triggerSimulatedQuiz,
+          resolveClip,
+          sendUtterance,
+          completeTask,
+          requestReroute,
+          manualReroute,
+          refreshCredits,
+          topUp100,
+          generateRadar,
+          openPoster,
+          generateCertificate,
+          unlockCertificate,
+          openCertificate
+        };
+      }
+    }).mount('#wuxian-app');
+  </script>
+</body>
+</html>

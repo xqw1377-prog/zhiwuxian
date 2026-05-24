@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WUXIAN · 隐私与数据主权</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #050505; color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .hairline { border: 0.5px solid rgba(255,255,255,0.08); }
+        .hairline-b { border-bottom: 0.5px solid rgba(255,255,255,0.08); }
+        .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(8px); }
+        .txt-green { color: #39FF14; }
+        .txt-yellow { color: #FFF01F; }
+        .txt-orange { color: #FF5E00; }
+        .bg-green { background: #39FF14; }
+        .bg-orange { background: #FF5E00; }
+        .checkbox-custom { width: 20px; height: 20px; border: 1.5px solid rgba(255,255,255,0.2); border-radius: 4px; cursor: pointer; transition: all 0.3s ease; }
+        .checkbox-custom:checked { background: #39FF14; border-color: #39FF14; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-6">
+    <div class="max-w-2xl w-full space-y-6">
+        <div class="text-center mb-8">
+            <h1 class="text-2xl font-extrabold tracking-[0.3em] txt-green">数据主权</h1>
+            <p class="text-xs text-gray-500 mt-2 tracking-wider">DATA SOVEREIGNTY</p>
+        </div>
+
+        <div class="glass p-8 hairline rounded-3xl space-y-6">
+            <p class="text-sm text-gray-400 leading-relaxed">
+                WUXIAN 的核心理念是<strong class="text-white">陪伴而非监控</strong>。
+                你的所有数据归属你本人，我们只在你明确授权后进行处理，且优先在你本地完成。
+            </p>
+
+            <div class="hairline-b pb-4">
+                <h2 class="text-sm font-semibold tracking-wider text-gray-300 mb-3">数据类别与授权</h2>
+                <div id="consent-list" class="space-y-3">
+                    <div class="flex items-center justify-between p-3 hairline rounded-xl">
+                        <div>
+                            <div class="text-sm">目标与学习规划</div>
+                            <div class="text-xs text-gray-500">目标拆解与进度追踪</div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer" checked disabled>
+                            <div class="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-600 opacity-50"></div>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between p-3 hairline rounded-xl">
+                        <div>
+                            <div class="text-sm">学习行为数据</div>
+                            <div class="text-xs text-gray-500">行为模式分析与天赋检测</div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer consent-toggle" data-category="behavior_stream">
+                            <div class="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-600"></div>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between p-3 hairline rounded-xl">
+                        <div>
+                            <div class="text-sm text-gray-400">
+                                课堂音频
+                                <span class="text-[10px] txt-green ml-1">仅本地处理</span>
+                            </div>
+                            <div class="text-xs text-gray-500">课堂内容同化与知识提取</div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer consent-toggle" data-category="classroom_audio">
+                            <div class="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-600"></div>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between p-3 hairline rounded-xl">
+                        <div>
+                            <div class="text-sm text-gray-400">
+                                笔迹与解题过程
+                                <span class="text-[10px] txt-orange ml-1">仅本地 · 不留存</span>
+                            </div>
+                            <div class="text-xs text-gray-500">实时作业纠偏与自适应提示</div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer consent-toggle" data-category="pen_stroke">
+                            <div class="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-600"></div>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between p-3 hairline rounded-xl">
+                        <div>
+                            <div class="text-sm">情绪信号记录</div>
+                            <div class="text-xs text-gray-500">情绪感知与陪伴模式切换</div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer consent-toggle" data-category="emotional_signal">
+                            <div class="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-600"></div>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between p-3 hairline rounded-xl">
+                        <div>
+                            <div class="text-sm">使用习惯统计</div>
+                            <div class="text-xs text-gray-500">产品体验优化（匿名）</div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer consent-toggle" data-category="usage_pattern">
+                            <div class="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-600"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <button id="export-btn" class="px-4 py-2.5 text-xs font-semibold tracking-wider hairline rounded-xl hover:bg-white/5 transition-all">
+                    导出我的数据
+                </button>
+                <button id="delete-btn" class="px-4 py-2.5 text-xs font-semibold tracking-wider hairline rounded-xl text-red-400 hover:bg-red-500/10 transition-all">
+                    删除所有数据
+                </button>
+            </div>
+
+            <p class="text-[10px] text-gray-600 text-center mt-4">
+                你的数据仅用于提升学习体验。我们不会出售、不会分享给第三方。
+                所有本地处理的数据绝不上传云端。
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const userId = localStorage.getItem('wuxian_userId') || 'demo-user-' + Date.now().toString(36);
+        localStorage.setItem('wuxian_userId', userId);
+
+        async function loadConsents() {
+            try {
+                const res = await fetch(`/api/privacy/consents/${userId}`);
+                const json = await res.json();
+                if (json.data?.consents) {
+                    json.data.consents.forEach(c => {
+                        const toggle = document.querySelector(`.consent-toggle[data-category="${c.category}"]`);
+                        if (toggle) toggle.checked = c.status === 'granted';
+                    });
+                }
+            } catch {}
+        }
+
+        document.querySelectorAll('.consent-toggle').forEach(el => {
+            el.addEventListener('change', async function() {
+                const category = this.dataset.category;
+                const endpoint = this.checked ? 'grant' : 'deny';
+                try {
+                    await fetch(`/api/privacy/consents/${userId}/${endpoint}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ category }),
+                    });
+                } catch {}
+            });
+        });
+
+        document.getElementById('export-btn').addEventListener('click', async () => {
+            const res = await fetch(`/api/privacy/export/${userId}`, { method: 'POST' });
+            const json = await res.json();
+            if (json.data?.downloadUrl) {
+                alert('数据导出请求已提交。下载链接将在就绪后提供。');
+            }
+        });
+
+        document.getElementById('delete-btn').addEventListener('click', async () => {
+            if (!confirm('确认删除所有数据？此操作不可撤销。')) return;
+            const res = await fetch(`/api/privacy/delete/${userId}`, { method: 'POST' });
+            const json = await res.json();
+            alert(json.data?.message || '数据已清除');
+            location.reload();
+        });
+
+        loadConsents();
+    </script>
+</body>
+</html>

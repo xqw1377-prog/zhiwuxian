@@ -1,0 +1,14 @@
+{
+  "name": "wuxian-desktop-shell",
+  "version": "2.0.0",
+  "private": true,
+  "description": "WUXIAN 2.0 · Electron 桌面常驻外壳（全局快捷键零跳出捕获）",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^34.0.0"
+  }
+}

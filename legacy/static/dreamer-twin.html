@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WUXIAN - 梦想家认知孪生演进中枢</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #030303; color: #FFFFFF; font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; }
+        .hairline { border: 0.5px solid rgba(255, 255, 255, 0.08); }
+        .hairline-b { border-bottom: 0.5px solid rgba(255, 255, 255, 0.08); }
+        .hairline-r { border-right: 0.5px solid rgba(255, 255, 255, 0.08); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        @keyframes twinPulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(57, 255, 20, 0.15); transform: scale(1); }
+            50% { box-shadow: 0 0 25px rgba(57, 255, 20, 0.5); transform: scale(1.02); }
+        }
+        .twin-alive { animation: twinPulse 4s infinite ease-in-out; }
+    </style>
+</head>
+<body class="h-screen flex flex-col justify-between select-none">
+
+    <header class="w-full h-14 hairline-b px-6 flex items-center justify-between backdrop-blur-md bg-black/40 fixed top-0 z-50">
+        <div class="flex items-center space-x-3">
+            <span class="text-white font-extrabold text-lg tracking-widest">WUXIAN</span>
+            <div class="h-4 w-[0.5px] bg-neutral-800"></div>
+            <span class="text-[9px] text-[#39FF14] tracking-widest font-mono bg-emerald-950/30 border border-emerald-500/20 px-2 py-0.5 rounded">DREAMER TWIN ENGINE v3.0</span>
+            <span id="api-badge" class="text-[9px] border border-neutral-800 text-neutral-600 px-1.5 py-0.5 rounded font-mono">BOOTING</span>
+        </div>
+        <div class="text-xs font-mono text-neutral-500" id="live-clock">UTC 00:00:00</div>
+    </header>
+
+    <main class="flex-grow pt-14 grid grid-cols-12 h-full overflow-hidden">
+
+        <section class="col-span-4 hairline-r p-5 flex flex-col justify-between bg-neutral-950/20 z-10 overflow-y-auto no-scrollbar">
+            <div class="space-y-5">
+                <div class="space-y-1">
+                    <p class="text-[9px] text-neutral-500 font-mono tracking-widest uppercase">Energy Feed Interface // 梦想家笔迹能量流</p>
+                    <h2 class="text-xs font-light text-neutral-300">实时捕捉孩子在纯黑画布上的演算阻力、心率波动与思维涟漪</h2>
+                </div>
+
+                <div class="bg-neutral-950 border border-neutral-900 rounded p-4 space-y-3">
+                    <input id="student-id" type="text" placeholder="梦想家 ID"
+                        class="w-full bg-black/40 border border-neutral-800 rounded px-2 py-1.5 text-[10px] font-mono text-neutral-300 outline-none" value="dreamer-canvas" />
+                    <input id="current-school" type="text" placeholder="就读校"
+                        class="w-full bg-black/40 border border-neutral-800 rounded px-2 py-1.5 text-[10px] font-mono text-neutral-300 outline-none" value="AP国际学校" />
+                    <input id="target-school" type="text" placeholder="目标校"
+                        class="w-full bg-black/40 border border-neutral-800 rounded px-2 py-1.5 text-[10px] font-mono text-neutral-300 outline-none" value="北京某顶尖美高预备部" />
+
+                    <div class="flex justify-between items-center text-[10px] font-mono">
+                        <span class="text-neutral-400">CANVAS_TRACE // 当前画布笔迹</span>
+                        <span class="text-[#39FF14] animate-pulse">● Live Input</span>
+                    </div>
+
+                    <div class="bg-black border border-neutral-900 p-3 rounded font-mono text-[11px] text-neutral-300 leading-normal">
+                        <div>// 正在推演目标校压轴空间向量几何：</div>
+                        <div class="text-[#39FF14] text-center my-2 font-bold" id="latex-trace">$$\vec{n} \cdot \vec{AP} = 0 \implies 2x - 3y + z = 0$$</div>
+                        <div class="text-[10px] text-neutral-500 flex justify-between">
+                            <span id="hesitation-lbl">落笔迟疑度: 420ms</span>
+                            <span id="friction-lbl">摩擦系数: 0.68</span>
+                        </div>
+                    </div>
+
+                    <button onclick="igniteTwinEvolution()" id="btn-sync" class="w-full py-2 bg-transparent border border-neutral-800 hover:border-[#FF5F1F] text-xs font-mono text-neutral-400 hover:text-[#FF5F1F] rounded transition-all duration-300">
+                        TWIN_SYNCHRONIZE // 唤醒并同步数字生命孪生体
+                    </button>
+                </div>
+
+                <div class="h-[0.5px] bg-neutral-900"></div>
+
+                <div class="space-y-1.5">
+                    <p class="text-[9px] text-neutral-500 font-mono tracking-widest uppercase">Twin Mutation Telemetry // 孪生体基因突变遥测</p>
+                    <div class="p-4 bg-neutral-950 border border-neutral-900 rounded space-y-2 min-h-[180px] font-mono text-[11px] text-neutral-400 leading-relaxed no-scrollbar overflow-y-auto" id="telemetry-box">
+                        <div>// 孪生体处于暗物质静默态。</div>
+                        <div>// 等待梦想家在画布投喂落笔能量流...</div>
+                    </div>
+                </div>
+
+                <div id="wormhole-paths" class="hidden space-y-1">
+                    <p class="text-[9px] text-neutral-500 font-mono tracking-widest uppercase">Wormhole Projection // 虫洞路径反向投影</p>
+                    <div id="path-cells" class="space-y-1 text-[9px] font-mono"></div>
+                </div>
+            </div>
+            <div class="text-[9px] font-mono text-neutral-600 text-center">// 简单的交互表面之下，藏着无穷大的无边界进化 //</div>
+        </section>
+
+        <section class="col-span-8 flex flex-col justify-between bg-neutral-950/5 relative h-full">
+
+            <div class="h-[60%] relative flex items-center justify-center border-b border-neutral-900 p-6">
+                <p class="text-[9px] text-neutral-500 font-mono tracking-widest uppercase absolute top-4 left-5">Digital Twin Organism Visualizer // 数字孪生生命体核</p>
+
+                <div class="relative flex items-center justify-center">
+                    <div id="twin-core" class="w-32 h-32 rounded-full border border-neutral-800 bg-neutral-950/40 flex flex-col items-center justify-center transition-all duration-1000 text-center">
+                        <span class="text-[11px] font-mono text-neutral-600 uppercase tracking-widest">DORMANT<br>静默</span>
+                    </div>
+                    <div id="orbit-1" class="absolute w-44 h-44 rounded-full border border-neutral-900 border-dashed animate-[spin_20s_linear_infinite] opacity-40"></div>
+                    <div id="orbit-2" class="absolute w-56 h-56 rounded-full border border-neutral-900 border-dashed animate-[spin_12s_linear_infinite_reverse] opacity-20"></div>
+                </div>
+
+                <div class="absolute bottom-4 inset-x-6 flex justify-between text-[10px] font-mono text-neutral-500">
+                    <div id="from-lbl">FROM: 就读学校重力场 [AP_SCHOOL]</div>
+                    <div class="text-right" id="to-lbl">TO: 目标学校准星 [TOP_US_HIGH]</div>
+                </div>
+            </div>
+
+            <div class="h-[40%] p-5 grid grid-cols-12 gap-5 bg-neutral-950/40 relative">
+                <p class="text-[9px] text-neutral-500 font-mono tracking-widest uppercase absolute top-3 left-5">Infinite Capacity Matrix // 无穷大能力边界进化矩阵</p>
+
+                <div class="col-span-5 flex items-center justify-center pt-4">
+                    <div class="w-full bg-neutral-950 border border-neutral-900 p-4 rounded h-24 flex flex-col justify-between transition-all duration-500" id="capacity-panel">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[8px] font-mono text-neutral-500">COGNITIVE_BOUNDLESS_INDEX</span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-neutral-800" id="status-dot"></span>
+                        </div>
+                        <div class="text-2xl font-black font-mono text-neutral-500 tracking-tighter" id="capacity-num">BOUNDLESS: 0</div>
+                    </div>
+                </div>
+
+                <div class="col-span-7 flex flex-col justify-center space-y-3 pt-4">
+                    <div class="bg-neutral-950 border border-neutral-900 p-4 rounded grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-[8px] text-neutral-500 font-mono">ASSET_ASSIMILATION_RATE // 资产吞噬速率</p>
+                            <p id="rate-1" class="text-sm font-mono text-neutral-400 mt-1">0 vectors/sec</p>
+                        </div>
+                        <div>
+                            <p class="text-[8px] text-neutral-500 font-mono text-right">SPACE_TIME_FOLD_RATIO // 时空折叠率</p>
+                            <p id="rate-2" class="text-sm font-mono text-neutral-400 mt-1 text-right">1.00x (平速)</p>
+                        </div>
+                    </div>
+                    <div class="bg-neutral-950 border border-neutral-900 p-3 rounded text-[9px] font-mono text-neutral-500" id="injection-advice">
+                        // 等待孪生体同步以计算课件灌注配速...
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        let running = false;
+
+        setInterval(() => {
+            document.getElementById('live-clock').innerText =
+                `UTC ${new Date().toISOString().slice(11, 19)}`;
+        }, 1000);
+
+        async function apiFetch(path, body) {
+            const res = await fetch(path, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            if (!res.ok) throw new Error('api');
+            return res.json();
+        }
+
+        function wakeCoreUI(vitality) {
+            const core = document.getElementById('twin-core');
+            if (vitality === 'depleted') {
+                core.className = 'w-32 h-32 rounded-full border border-orange-500/50 bg-orange-950/10 flex flex-col items-center justify-center transition-all duration-1000 text-center';
+                core.innerHTML = "<span class='text-xs font-mono text-orange-400 font-bold uppercase tracking-widest'>DEPLETED<br>能量干瘪</span>";
+            } else {
+                core.className = 'w-32 h-32 rounded-full border border-[#39FF14] bg-emerald-950/10 flex flex-col items-center justify-center twin-alive transition-all duration-1000 shadow-[0_0_20px_rgba(57,255,20,0.3)]';
+                core.innerHTML = "<span class='text-xs font-mono text-[#39FF14] font-bold uppercase tracking-widest animate-pulse'>ALIVE<br>活体演进</span>";
+            }
+            document.getElementById('orbit-1').className =
+                'absolute w-44 h-44 rounded-full border border-[#39FF14]/30 border-dashed animate-[spin_8s_linear_infinite] opacity-100';
+            document.getElementById('orbit-2').className =
+                'absolute w-56 h-56 rounded-full border border-[#FF5F1F]/20 border-dashed animate-[spin_5s_linear_infinite_reverse] opacity-100';
+        }
+
+        function renderReport(r) {
+            const report = r.data?.data?.report ?? r.data?.report;
+            if (!report) return;
+
+            const twin = report.twin;
+            const telemetry = report.telemetry ?? [];
+
+            document.getElementById('telemetry-box').innerHTML = telemetry.map(t =>
+                `<div class="${t.includes('基因跃迁') ? 'text-[#FFF01F]' : t.includes('无边界') ? 'text-[#39FF14] font-bold' : ''}">${t}</div>`
+            ).join('');
+
+            if (report.mutationHighlight) {
+                document.getElementById('telemetry-box').innerHTML +=
+                    `<div class="text-[#FFF01F]">${report.mutationHighlight}</div>`;
+            }
+
+            wakeCoreUI(twin.vitality);
+
+            document.getElementById('from-lbl').innerText =
+                `FROM: ${twin.currentSchoolGravity}`;
+            document.getElementById('to-lbl').innerText =
+                `TO: ${twin.targetSchoolBeacon}`;
+
+            const isThriving = twin.vitality === 'thriving' || twin.boundlessIndex > 5;
+            document.getElementById('capacity-panel').className = isThriving
+                ? 'w-full bg-neutral-950 border border-orange-500/30 p-4 rounded h-24 flex flex-col justify-between shadow-[0_0_20px_rgba(255,95,31,0.1)]'
+                : 'w-full bg-neutral-950 border border-emerald-500/30 p-4 rounded h-24 flex flex-col justify-between shadow-[0_0_15px_rgba(57,255,20,0.05)]';
+
+            document.getElementById('status-dot').className = isThriving
+                ? 'w-1.5 h-1.5 rounded-full bg-[#FF5F1F] shadow-[0_0_8px_#FF5F1F] animate-ping'
+                : 'w-1.5 h-1.5 rounded-full bg-[#39FF14] shadow-[0_0_8px_#39FF14] animate-ping';
+
+            document.getElementById('capacity-num').innerHTML = twin.boundlessIndex > 1
+                ? "CAPACITY: <span class='text-[#FF5F1F] font-black'>INF_GROWTH</span>"
+                : `BOUNDLESS: <span class='text-[#39FF14]'>${twin.boundlessIndex.toFixed(1)}</span>`;
+
+            document.getElementById('rate-1').innerText =
+                `${Math.round(twin.assimilationRatePerMin).toLocaleString()} cells/min`;
+            document.getElementById('rate-1').className = 'text-sm font-mono text-[#39FF14] mt-1';
+
+            document.getElementById('rate-2').innerText =
+                `${twin.spaceTimeFoldRatio.toFixed(2)}x (${twin.spaceTimeFoldRatio > 3 ? '时空狂飙中' : '加速演进'})`;
+            document.getElementById('rate-2').className =
+                `text-sm font-mono ${twin.spaceTimeFoldRatio > 3 ? 'text-[#FF5F1F]' : 'text-neutral-300'} mt-1 text-right`;
+
+            document.getElementById('injection-advice').innerText = report.injectionAdvice || '—';
+            document.getElementById('injection-advice').className =
+                twin.vitality === 'depleted'
+                    ? 'bg-neutral-950 border border-orange-500/20 p-3 rounded text-[9px] font-mono text-orange-400'
+                    : 'bg-neutral-950 border border-emerald-500/20 p-3 rounded text-[9px] font-mono text-[#39FF14]';
+
+            const paths = report.canvasProjection ?? twin.wormholePaths ?? [];
+            if (paths.length) {
+                document.getElementById('wormhole-paths').classList.remove('hidden');
+                document.getElementById('path-cells').innerHTML = paths.map(p =>
+                    `<div class="p-2 bg-black/40 border border-neutral-800 rounded text-neutral-400">
+                        🎯 ${p.knowledgeTag} · urgency ${p.urgency.toFixed(1)}
+                        ${p.smoothed ? ' · <span class="text-[#39FF14]">虫洞已平滑</span>' : ''}
+                    </div>`
+                ).join('');
+            }
+        }
+
+        async function igniteTwinEvolution() {
+            if (running) return;
+            running = true;
+            document.getElementById('btn-sync').disabled = true;
+
+            const studentId = document.getElementById('student-id').value.trim() || 'dreamer-canvas';
+            const currentSchool = document.getElementById('current-school').value.trim();
+            const targetSchool = document.getElementById('target-school').value.trim();
+            const laTeXTrace = document.getElementById('latex-trace').innerText;
+
+            document.getElementById('telemetry-box').innerHTML =
+                '<div>⏳ [OpenClaw] 正在提取画布手写 LaTeX 摩擦力特征...</div>';
+
+            try {
+                const data = await apiFetch('/api/v1/twin/synchronize', {
+                    studentId,
+                    displayName: `梦想家 #${studentId.slice(-4)}`,
+                    laTeXTrace,
+                    hesitationMs: 420,
+                    frictionCoefficient: 0.68,
+                    currentSchool,
+                    targetSchool,
+                });
+                document.getElementById('api-badge').innerText = 'LIVE API';
+                document.getElementById('api-badge').className =
+                    'text-[9px] border border-emerald-500/30 text-[#39FF14] px-1.5 py-0.5 rounded font-mono';
+                renderReport(data);
+            } catch (_) {
+                document.getElementById('api-badge').innerText = 'LOCAL DEMO';
+                renderReport({
+                    data: {
+                        report: {
+                            twin: {
+                                vitality: 'alive',
+                                boundlessIndex: 12.4,
+                                assimilationRatePerMin: 14240,
+                                spaceTimeFoldRatio: 5.72,
+                                currentSchoolGravity: currentSchool,
+                                targetSchoolBeacon: targetSchool,
+                                wormholePaths: [],
+                            },
+                            telemetry: [
+                                '🟢 孪生生命体成功与梦想家肉身建立动态量子对齐！',
+                                '🧬 基因跃迁：孪生体检测到梦想家空间几何存在 420ms 迟疑！',
+                                '🔥 正在疯狂吞噬 B站、YouTube、MIT公开课等相关 LaTeX 活体细胞进行修复...',
+                                '🚀 孪生体已提前在暗中模拟对抗目标学校校考卷 10,000次。',
+                                '🎯 成功将高维矩阵虫洞路径无感反向投影至前端画布前方！',
+                            ],
+                            injectionAdvice: '配速 ×1.25 · 吞噬 14,240 cells/min',
+                            canvasProjection: [
+                                { knowledgeTag: '空间几何迟疑 · 法向量投影', urgency: 2.5, smoothed: true },
+                            ],
+                        },
+                    },
+                });
+            } finally {
+                running = false;
+                document.getElementById('btn-sync').disabled = false;
+            }
+        }
+
+        fetch('/api/health').then(r => r.ok && (
+            document.getElementById('api-badge').innerText = 'API READY',
+            document.getElementById('api-badge').className =
+                'text-[9px] border border-neutral-700 text-neutral-400 px-1.5 py-0.5 rounded font-mono'
+        )).catch(() => {});
+    </script>
+</body>
+</html>

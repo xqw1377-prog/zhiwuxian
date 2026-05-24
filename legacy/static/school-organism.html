@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WUXIAN - 学校资产活体自进化中台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #030303; color: #FFFFFF; font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; }
+        .hairline { border: 0.5px solid rgba(255, 255, 255, 0.08); }
+        .hairline-b { border-bottom: 0.5px solid rgba(255, 255, 255, 0.08); }
+        .hairline-r { border-right: 0.5px solid rgba(255, 255, 255, 0.08); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        @keyframes fluorescentPulse {
+            0%, 100% { box-shadow: 0 0 8px rgba(57, 255, 20, 0.2); }
+            50% { box-shadow: 0 0 20px rgba(57, 255, 20, 0.6); }
+        }
+        .alive-glow { animation: fluorescentPulse 3s infinite; }
+        @keyframes beamSweep {
+            0% { left: -20%; }
+            100% { left: 120%; }
+        }
+        .energy-sweep { animation: beamSweep 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    </style>
+</head>
+<body class="h-screen flex flex-col select-none">
+
+    <header class="w-full h-14 hairline-b px-6 flex items-center justify-between backdrop-blur-md bg-black/40 fixed top-0 z-50">
+        <div class="flex items-center space-x-3">
+            <span class="text-white font-extrabold text-lg tracking-widest">WUXIAN</span>
+            <div class="h-4 w-[0.5px] bg-neutral-800"></div>
+            <span class="text-[9px] text-[#39FF14] tracking-widest font-mono bg-emerald-950/30 border border-emerald-500/20 px-2 py-0.5 rounded">SCHOOL ORGANISM ENGINE v2.0</span>
+            <span id="api-badge" class="text-[9px] border border-neutral-800 text-neutral-600 px-1.5 py-0.5 rounded font-mono">BOOTING</span>
+        </div>
+        <div class="text-xs font-mono text-neutral-500" id="live-clock">UTC 00:00:00</div>
+    </header>
+
+    <main class="flex-grow pt-14 grid grid-cols-12 h-full overflow-hidden">
+
+        <section class="col-span-4 hairline-r p-5 flex flex-col justify-between bg-neutral-950/20 z-10 overflow-y-auto no-scrollbar">
+            <div class="space-y-5">
+                <div class="space-y-1">
+                    <p class="text-[9px] text-neutral-500 font-mono tracking-widest uppercase">Trace Ingestion Gate // 痕迹吸入闸口</p>
+                    <h2 class="text-xs font-light text-neutral-300">投喂就读校日常数据（作业 / 期末卷 / 圈层情报）</h2>
+                </div>
+
+                <div class="bg-neutral-950 border border-neutral-900 rounded p-3 space-y-2">
+                    <input id="school-name" type="text" placeholder="就读校名称"
+                        class="w-full bg-black/40 border border-neutral-800 rounded px-2 py-1.5 text-[10px] font-mono text-neutral-300 outline-none" value="AP国际学校" />
+                    <input id="target-school" type="text" placeholder="目标校（双端对齐）"
+                        class="w-full bg-black/40 border border-neutral-800 rounded px-2 py-1.5 text-[10px] font-mono text-neutral-300 outline-none" value="北京某顶尖美高预备部" />
+                    <input id="asset-title" type="text" placeholder="资产标题"
+                        class="w-full bg-black/40 border border-neutral-800 rounded px-2 py-1.5 text-[10px] font-mono text-neutral-300 outline-none" value="2026学年_高一数学期末模拟卷" />
+                    <div class="flex gap-1 text-[8px] font-mono">
+                        <button onclick="setTrace('exam_final')" id="tab-exam" class="flex-1 py-1 border border-[#39FF14]/40 text-[#39FF14] rounded">期末卷</button>
+                        <button onclick="setTrace('homework')" id="tab-hw" class="flex-1 py-1 border border-neutral-800 text-neutral-600 rounded">作业</button>
+                        <button onclick="setTrace('ecosystem')" id="tab-eco" class="flex-1 py-1 border border-neutral-800 text-neutral-600 rounded">圈层</button>
+                    </div>
+                    <div class="border border-dashed border-neutral-800 p-3 rounded text-center text-[10px] text-neutral-500 bg-black/40" id="asset-preview">
+                        📄 2026学年_高一数学期末模拟卷.pdf
+                    </div>
+                    <button onclick="activateSchoolOrganism()" id="btn-genesis" class="w-full py-2 bg-transparent border border-neutral-800 hover:border-[#39FF14] text-xs font-mono text-neutral-400 hover:text-[#39FF14] rounded transition-all">
+                        GENESIS // 注入 OpenClaw 触发资产生命化
+                    </button>
+                </div>
+
+                <div class="h-[0.5px] bg-neutral-900"></div>
+
+                <div class="space-y-1.5">
+                    <p class="text-[9px] text-neutral-500 font-mono tracking-widest uppercase">Organism Fission Log // 活体生命裂变流</p>
+                    <div id="evolution-card" class="p-4 bg-neutral-950 border border-neutral-900 rounded space-y-2 min-h-[200px] transition-all duration-500">
+                        <p class="text-[11px] text-neutral-400 font-mono leading-relaxed" id="evolution-text">// 资产处于静态休眠。等待 OpenClaw 注入生命能量...</p>
+                        <div id="evolution-steps" class="space-y-1 text-[9px] font-mono text-neutral-500"></div>
+                        <div id="evolution-report" class="hidden space-y-2 bg-neutral-900/40 border border-[#39FF14]/20 p-3 rounded mt-2">
+                            <div class="flex justify-between text-[10px] font-mono">
+                                <span class="text-[#39FF14] font-bold" id="mutation-lbl">ORGANISM_MUTATION</span>
+                                <span class="text-neutral-500" id="gen-lbl">Generation: v1</span>
+                            </div>
+                            <p class="text-xs text-neutral-300" id="mutation-desc">—</p>
+                            <div class="text-[11px] font-mono text-[#FFF01F] bg-black/50 p-2 rounded border border-neutral-900" id="latex-cell"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-[9px] font-mono text-neutral-600 text-center mt-4">// 每一张试卷，都是一个不断繁衍的数字生命 //</div>
+        </section>
+
+        <section class="col-span-8 flex flex-col bg-neutral-950/5 relative h-full">
+            <div class="h-[60%] relative flex items-center justify-center border-b border-neutral-900 p-6">
+                <p class="text-[9px] text-neutral-500 font-mono tracking-widest uppercase absolute top-4 left-5">Dual-School Gravity Alignment // 双端重力场引力对齐图</p>
+                <div class="w-full max-w-xl flex justify-between items-center relative px-10">
+                    <div class="absolute inset-y-0 left-1/2 w-[0.5px] bg-neutral-800 flex flex-col justify-between items-center text-[8px] font-mono text-neutral-600 -translate-x-1/2">
+                        <span>HIGH_RESISTANCE</span>
+                        <span id="resistance-gap" class="text-neutral-500">断层断裂带</span>
+                        <span>LOW_GRAVITY</span>
+                    </div>
+                    <div class="flex flex-col items-center space-y-2 z-10">
+                        <div id="source-school-cell" class="w-16 h-16 rounded-full border border-neutral-800 bg-neutral-950/80 flex items-center justify-center transition-all duration-1000">
+                            <span class="text-[10px] font-mono text-neutral-500 text-center px-2">就读校<br>静止</span>
+                        </div>
+                        <p class="text-[10px] font-mono text-neutral-400" id="source-lbl">就读校 (起点)</p>
+                        <p id="source-hardness" class="text-[9px] font-mono text-neutral-600">考题硬度: —</p>
+                    </div>
+                    <div class="flex-grow mx-4 h-[1px] bg-neutral-900 relative overflow-hidden">
+                        <div id="energy-beam" class="absolute inset-0 bg-gradient-to-r from-transparent via-[#39FF14] to-transparent w-20 h-full -left-20"></div>
+                    </div>
+                    <div class="flex flex-col items-center space-y-2 z-10">
+                        <div id="target-school-cell" class="w-16 h-16 rounded-full border border-neutral-800 bg-neutral-950/80 flex items-center justify-center transition-all duration-1000">
+                            <span class="text-[10px] font-mono text-neutral-500 text-center px-2">目标校<br>准星</span>
+                        </div>
+                        <p class="text-[10px] font-mono text-neutral-400" id="target-lbl">目标校 (终点)</p>
+                        <p id="target-hardness" class="text-[9px] font-mono text-neutral-500">考题硬度: —</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="h-[40%] p-5 grid grid-cols-12 gap-5 bg-neutral-950/40 relative">
+                <p class="text-[9px] text-neutral-500 font-mono tracking-widest uppercase absolute top-3 left-5">Organism Capacity Matrix // 活体资产能力演进矩阵</p>
+                <div class="col-span-5 flex items-center justify-center pt-4">
+                    <div class="w-full bg-neutral-950 border border-neutral-900 p-4 rounded h-24 flex flex-col justify-between transition-all duration-500" id="matrix-glow-panel">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[8px] font-mono text-neutral-500">TOTAL_ORGANISM_CAPACITY</span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-neutral-800" id="matrix-status-dot"></span>
+                        </div>
+                        <div class="text-xl font-bold font-mono text-neutral-400 transition-all duration-500" id="capacity-value">∞ <span class="text-xs font-normal text-neutral-600">(等待激活)</span></div>
+                    </div>
+                </div>
+                <div class="col-span-7 flex flex-col justify-center space-y-3 pt-4">
+                    <div class="bg-neutral-950 border border-neutral-900 p-3 rounded flex justify-between">
+                        <div>
+                            <p class="text-[8px] text-neutral-500 font-mono">WORMHOLE_VELOCITY</p>
+                            <p id="wormhole-txt" class="text-xs font-mono text-neutral-400 mt-0.5">0.00x (时空静止)</p>
+                        </div>
+                        <div>
+                            <p class="text-[8px] text-neutral-500 font-mono text-right">MUTATION_RATE</p>
+                            <p id="mutation-txt" class="text-xs font-mono text-neutral-400 mt-0.5 text-right">0.00%</p>
+                        </div>
+                    </div>
+                    <div id="false-prosperity" class="hidden text-[9px] font-mono text-[#FF5E00] bg-orange-950/20 border border-orange-500/30 p-2 rounded"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const API_BASE = window.location.origin.includes('3401') ? '' : 'http://localhost:3401';
+        let traceKind = 'exam_final';
+        let running = false;
+
+        function setTrace(kind) {
+            traceKind = kind;
+            ['exam','hw','eco'].forEach(t => {
+                const el = document.getElementById('tab-' + t);
+                const active = (kind === 'exam_final' && t === 'exam') || (kind === 'homework' && t === 'hw') || (kind === 'ecosystem' && t === 'eco');
+                el.className = active
+                    ? 'flex-1 py-1 border border-[#39FF14]/40 text-[#39FF14] rounded'
+                    : 'flex-1 py-1 border border-neutral-800 text-neutral-600 rounded';
+            });
+            const titles = { exam_final: '📄 期末模拟卷.pdf', homework: '📝 随堂作业拍照', ecosystem: '🌐 圈层情报包' };
+            document.getElementById('asset-preview').innerText = titles[kind] || titles.exam_final;
+        }
+
+        async function apiFetch(path, body) {
+            const res = await fetch(`${API_BASE}${path}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            if (!res.ok) throw new Error('api');
+            return res.json();
+        }
+
+        function animatePhase1(schoolName) {
+            document.getElementById('evolution-text').innerText =
+                '[OpenClaw 激活] 多模态探针剥离手写痕迹，捕获认知迟疑摩擦力...';
+            document.getElementById('source-school-cell').className =
+                'w-16 h-16 rounded-full border border-[#39FF14] bg-emerald-950/20 flex items-center justify-center alive-glow transition-all duration-1000';
+            document.getElementById('source-school-cell').innerHTML =
+                "<span class='text-[10px] font-mono text-[#39FF14] font-bold text-center px-2'>活体<br>苏醒</span>";
+            document.getElementById('source-lbl').innerText = schoolName + ' (起点)';
+            document.getElementById('energy-beam').className =
+                'absolute inset-0 bg-gradient-to-r from-transparent via-[#39FF14] to-transparent w-40 h-full energy-sweep';
+        }
+
+        function renderReport(r) {
+            const report = r.data?.data?.report ?? r.data?.report;
+            if (!report) return;
+
+            document.getElementById('evolution-steps').innerHTML = report.evolutionLog.map(l =>
+                `<p class="text-[#39FF14]">${l}</p>`
+            ).join('');
+
+            const org = report.organism;
+            document.getElementById('evolution-report').classList.remove('hidden');
+            document.getElementById('evolution-card').className =
+                'p-4 bg-neutral-950 border border-emerald-500/30 rounded space-y-2 min-h-[200px] shadow-[0_0_15px_rgba(57,255,20,0.05)]';
+            document.getElementById('mutation-lbl').innerText =
+                org.vitality === 'thriving' ? 'ORGANISM_MUTATION // 良性突变' : 'ORGANISM_EVOLUTION // 防御性分裂';
+            document.getElementById('gen-lbl').innerText = `Generation: v${org.lifeGeneration}`;
+            document.getElementById('mutation-desc').innerText =
+                `试卷生命体 ${org.entityId.slice(-8)} · 适应度 ${org.fitnessScore.toFixed(3)}`;
+
+            const formula = org.dnaSequence.coreFormulas.slice(-1)[0] || '$$\\mathbf{x}_{k+1} = A \\mathbf{x}_k$$';
+            document.getElementById('latex-cell').innerHTML =
+                `<div>🧬 繁衍 LaTeX 衍生细胞：</div><div class="text-white text-center py-1">${formula}</div>` +
+                `<div class="text-[10px] text-neutral-500 text-right">能力边界：${report.capacityLabel}</div>`;
+
+            if (report.examAnalysis) {
+                document.getElementById('source-hardness').innerText =
+                    `考题硬度: ${report.examAnalysis.logicDensity.toFixed(2)}`;
+                document.getElementById('source-hardness').className = 'text-[9px] font-mono text-[#39FF14]';
+                if (report.examAnalysis.falseProsperity) {
+                    const el = document.getElementById('false-prosperity');
+                    el.classList.remove('hidden');
+                    el.innerText = '⚠ ' + (report.examAnalysis.plannerAlert || '虚假繁荣预警');
+                }
+            }
+
+            if (report.dualAlignment) {
+                const da = report.dualAlignment;
+                document.getElementById('target-hardness').innerText =
+                    `考题硬度: ${da.valueDimensions.examHardness.targetLogicDensity.toFixed(2)}`;
+                document.getElementById('target-school-cell').className =
+                    'w-16 h-16 rounded-full border border-[#FF5E00] bg-orange-950/20 flex items-center justify-center shadow-[0_0_15px_#FF5E00]';
+                document.getElementById('target-school-cell').innerHTML =
+                    "<span class='text-[10px] font-mono text-[#FF5E00] font-bold text-center px-2'>双端<br>对齐</span>";
+                document.getElementById('resistance-gap').innerText = `断层 ${(da.gravityGapScore * 100).toFixed(0)}%`;
+                document.getElementById('resistance-gap').className = 'text-[#FFF01F] font-bold animate-pulse';
+            }
+
+            document.getElementById('capacity-value').innerHTML =
+                `CAPACITY: <span class="text-[#39FF14] font-black">${report.capacityLabel}</span>`;
+            document.getElementById('matrix-glow-panel').className =
+                'w-full bg-neutral-950 border border-emerald-500/30 p-4 rounded h-24 flex flex-col justify-between shadow-[0_0_15px_rgba(57,255,20,0.05)]';
+            document.getElementById('matrix-status-dot').className =
+                'w-1.5 h-1.5 rounded-full bg-[#39FF14] shadow-[0_0_8px_#39FF14] animate-ping';
+            document.getElementById('wormhole-txt').innerText = `${report.wormholeVelocity.toFixed(2)}x (时空狂飙中)`;
+            document.getElementById('wormhole-txt').className = 'text-xs font-mono text-[#39FF14] mt-0.5';
+            document.getElementById('mutation-txt').innerText = `${report.mutationRate}% (代际更迭)`;
+            document.getElementById('mutation-txt').className = 'text-xs font-mono text-[#FFF01F] mt-0.5 text-right';
+            document.getElementById('evolution-text').innerText = report.evolutionLog[report.evolutionLog.length - 1] || '生命化完成';
+        }
+
+        async function activateSchoolOrganism() {
+            if (running) return;
+            running = true;
+            document.getElementById('btn-genesis').disabled = true;
+
+            const schoolName = document.getElementById('school-name').value.trim() || 'AP国际学校';
+            const targetSchoolName = document.getElementById('target-school').value.trim();
+            const assetTitle = document.getElementById('asset-title').value.trim() || '期末模拟卷';
+
+            animatePhase1(schoolName);
+            document.getElementById('target-lbl').innerText = (targetSchoolName || '目标校') + ' (终点)';
+
+            try {
+                const data = await apiFetch('/api/admin/trace/genesis', {
+                    schoolName,
+                    assetTitle,
+                    traceKind,
+                    targetSchoolName: targetSchoolName || undefined,
+                    studentId: 'dreamer-canvas',
+                });
+                document.getElementById('api-badge').innerText = 'LIVE API';
+                document.getElementById('api-badge').className =
+                    'text-[9px] border border-emerald-500/30 text-[#39FF14] px-1.5 py-0.5 rounded font-mono';
+                setTimeout(() => renderReport(data), 600);
+            } catch (_) {
+                document.getElementById('api-badge').innerText = 'LOCAL DEMO';
+                setTimeout(() => {
+                    renderReport({
+                        data: {
+                            report: {
+                                evolutionLog: [
+                                    '[OpenClaw 激活] 期末卷 OCR 粉碎完成',
+                                    '[触角②] 逻辑密度 0.32 · 虚假繁荣预警',
+                                    '[双端对齐] 重力断层 78%',
+                                ],
+                                organism: {
+                                    entityId: 'org-demo', lifeGeneration: 2, fitnessScore: 0.72,
+                                    vitality: 'thriving',
+                                    dnaSequence: { coreFormulas: ['$$\\mathbf{x}_{k+1} = A \\mathbf{x}_k + B \\mathbf{u}_k$$'] },
+                                },
+                                examAnalysis: {
+                                    logicDensity: 0.32,
+                                    falseProsperity: true,
+                                    plannerAlert: '虚假繁荣：原校拿A不代表能考上',
+                                },
+                                dualAlignment: {
+                                    gravityGapScore: 0.78,
+                                    valueDimensions: { examHardness: { targetLogicDensity: 0.88 } },
+                                },
+                                wormholeVelocity: 3.84,
+                                mutationRate: 94.2,
+                                capacityLabel: 'EXTENDED',
+                            },
+                        },
+                    });
+                }, 800);
+            }
+
+            running = false;
+            document.getElementById('btn-genesis').disabled = false;
+        }
+
+        setInterval(() => {
+            document.getElementById('live-clock').innerText =
+                `UTC ${new Date().toISOString().slice(11, 19)}`;
+        }, 1000);
+    </script>
+</body>
+</html>

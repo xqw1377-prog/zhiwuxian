@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    body {
+      margin: 0;
+      font-family: ui-monospace, monospace;
+      background: rgba(13, 14, 18, 0.92);
+      color: #00ff7f;
+      border: 1px solid rgba(0, 255, 127, 0.35);
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+    }
+    #status { line-height: 1.6; }
+    .hint { color: rgba(255,255,255,0.45); margin-top: 8px; font-size: 10px; }
+  </style>
+</head>
+<body>
+  <div id="status">WUXIAN Desktop · 待命</div>
+  <div class="hint">macOS: Option+Space · Win: Alt+Shift+W</div>
+  <script>
+    window.wuxianDesktop?.onStatus((msg) => {
+      document.getElementById('status').textContent = msg;
+    });
+  </script>
+</body>
+</html>

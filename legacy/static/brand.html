@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WUXIAN 极简品牌标识</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入极具现代感与分量感的高端无衬线字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #000000; /* 纯黑底色，衬托鲜艳色彩 */
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 限制 SVG 容器尺寸 */
+        .logo-svg {
+            width: 380px;
+            height: 190px;
+            /* 极其微弱的霓虹微光，保持日式极简，不花哨 */
+            filter: drop-shadow(0 0 8px rgba(74, 222, 128, 0.15));
+        }
+
+        /* 极细线条样式 */
+        .infinity-line {
+            fill: none;
+            stroke-width: 0.35; /* 极细线条，呈现发丝般的精致感 */
+            transition: stroke-width 0.4s ease, opacity 0.4s ease;
+        }
+
+        /* 稳重、大器的拼音设计 */
+        .brand-text {
+            margin-top: 2.5rem;
+            color: #FFFFFF; /* 纯白，最高级 */
+            font-size: 3rem;
+            letter-spacing: 0.35em; /* 极宽的字间距，展现留白与从容 */
+            font-weight: 800;
+            text-indent: 0.35em; /* 消除右侧因字距产生的微小偏移，达到绝对居中 */
+            text-transform: uppercase;
+        }
+
+        /* 交互微动效：鼠标悬停时线条微微变亮、变实 */
+        .container:hover .infinity-line {
+            opacity: 0.85 !important;
+            stroke-width: 0.5;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- 矢量画布 -->
+        <svg class="logo-svg" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <!-- 日系鲜艳渐变：生机勃勃的荧光绿 -> 柠檬黄 -> 活力橙 -->
+                <linearGradient id="japaneseNeon" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:#39FF14;stop-opacity:1" /> <!-- 荧光绿 -->
+                    <stop offset="45%" style="stop-color:#FFF01F;stop-opacity:1" /> <!-- 鲜亮黄 -->
+                    <stop offset="100%" style="stop-color:#FF5E00;stop-opacity:1" /> <!-- 活力橙 -->
+                </linearGradient>
+            </defs>
+            
+            <g id="lines-group">
+                <!-- 动态生成完美嵌套的无限符号线条 -->
+            </g>
+        </svg>
+
+        <!-- 纯粹稳重的品牌名 -->
+        <div class="brand-text">WUXIAN</div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            const group = document.getElementById('lines-group');
+            const numLines = 36; // 36根发丝细线叠加
+            
+            for (let i = 0; i < numLines; i++) {
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                
+                // 完美的伯努利双纽线公式 (Lemniscate of Bernoulli):
+                // x = (a * cos(t)) / (1 + sin^2(t))
+                // y = (a * sin(t) * cos(t)) / (1 + sin^2(t))
+                // 我们通过微调 a 的大小，实现完美的同心嵌套，避免任何交叉扭曲变形
+                
+                const baseScale = 64; 
+                // 每一根线的缩放比例微调
+                const scale = baseScale - (i * 0.45); 
+                
+                const d = [];
+                const steps = 120; // 精细采样点，确保曲线绝对丝滑
+                
+                for (let j = 0; j <= steps; j++) {
+                    const t = (j / steps) * Math.PI * 2;
+                    const sinT = Math.sin(t);
+                    const cosT = Math.cos(t);
+                    const denom = 1 + sinT * sinT;
+                    
+                    // 计算公式坐标，并平移至画布中心 (100, 50)
+                    const x = 100 + (scale * cosT) / denom;
+                    const y = 50 + (scale * sinT * cosT) / denom;
+                    
+                    if (j === 0) {
+                        d.push(`M ${x} ${y}`);
+                    } else {
+                        d.push(`L ${x} ${y}`);
+                    }
+                }
+                
+                path.setAttribute("d", d.join(" "));
+                path.setAttribute("class", "infinity-line");
+                path.setAttribute("stroke", "url(#japaneseNeon)");
+                
+                // 让越往内侧的线条透明度稍微发生微调，产生极其精致的渐隐空间感
+                const opacity = (1 - (i / numLines)) * 0.7 + 0.1;
+                path.style.opacity = opacity;
+                
+                group.appendChild(path);
+            }
+        };
+        
+        console.log("WUXIAN (无限) 完美伯努利双纽线 Logo 渲染完成。");
+    </script>
+</body>
+</html>

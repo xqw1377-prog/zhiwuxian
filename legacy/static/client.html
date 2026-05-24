@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WUXIAN - 梦想路由器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #000000;
+            color: #FFFFFF;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow-x: hidden;
+        }
+        .hairline-border {
+            border: 0.5px solid rgba(255, 255, 255, 0.08);
+        }
+        .hairline-bottom {
+            border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
+        }
+        .hairline-top {
+            border-top: 0.5px solid rgba(255, 255, 255, 0.08);
+        }
+        .wuxian-tracking {
+            letter-spacing: 0.35em;
+            text-indent: 0.35em;
+        }
+        .infinity-line {
+            fill: none;
+            stroke-width: 0.4;
+            opacity: 0.4;
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .container-glow:hover .infinity-line {
+            stroke-width: 0.6;
+            opacity: 0.85;
+        }
+        .logo-glow {
+            filter: drop-shadow(0 0 8px rgba(57, 255, 20, 0.12));
+        }
+        .btn-launch {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-launch:hover:not(:disabled) {
+            border-color: #39FF14;
+            color: #39FF14;
+            filter: drop-shadow(0 0 6px rgba(57, 255, 20, 0.25));
+        }
+        .btn-launch:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .input-focus:focus {
+            border-color: #39FF14 !important;
+        }
+        .activation-overlay {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .activation-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+        }
+        .status-pulse {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <header class="w-full h-16 hairline-bottom px-4 md:px-8 flex items-center justify-between backdrop-blur-md bg-black/40 fixed top-0 z-50">
+        <div class="flex items-center space-x-2">
+            <span class="text-white font-extrabold text-lg tracking-widest">WUXIAN</span>
+            <span class="text-[9px] border border-emerald-500/30 text-[#39FF14] px-1 rounded font-mono bg-emerald-950/20">V1.0</span>
+        </div>
+        <div class="text-xs text-neutral-500 tracking-wider font-mono hidden md:block" id="system-clock">
+            ROUTER ACTIVE // COORDINATE LOCKED
+        </div>
+    </header>
+
+    <main class="flex-grow flex items-center justify-center px-4 pt-20 pb-8">
+        <div class="w-full max-w-4xl container-glow transition-all duration-500" id="main-panel">
+
+            <div class="w-full flex justify-center mb-6 md:mb-10">
+                <svg class="logo-glow w-[280px] h-[140px] md:w-[360px] md:h-[180px]" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="neonGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#39FF14;stop-opacity:1" />
+                            <stop offset="50%" style="stop-color:#FFF01F;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#FF5E00;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <g id="svg-star-tracks"></g>
+                </svg>
+            </div>
+
+            <div class="max-w-md mx-auto text-center space-y-8 px-4">
+                <div class="space-y-2">
+                    <h1 class="text-white text-2xl md:text-3xl font-extrabold wuxian-tracking uppercase">激活你的梦想空间</h1>
+                    <p class="text-xs text-neutral-500 tracking-wide">请输入你的目标轴与时间轴，系统将为你逆向重构未来</p>
+                </div>
+
+                <div class="space-y-6 text-left">
+                    <div class="space-y-2">
+                        <label class="text-[11px] text-neutral-400 font-mono tracking-widest block uppercase">Step 01 // 锁定目标轴 (Goal Baseline)</label>
+                        <input type="text" id="input-goal" placeholder="例如：考上理想学府 / 学会一门新语言 / 筹备首个个人画展..."
+                            class="input-focus w-full bg-transparent border-b border-neutral-800 text-sm py-2 text-white placeholder-neutral-700 outline-none transition-colors duration-300">
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[11px] text-neutral-400 font-mono tracking-widest block uppercase">Step 02 // 锁定时间轴 (Time Baseline)</label>
+                        <div class="relative flex items-center">
+                            <input type="number" id="input-time" placeholder="期望达成的总天数" min="1"
+                                class="input-focus w-full bg-transparent border-b border-neutral-800 text-sm py-2 text-white placeholder-neutral-700 outline-none transition-colors duration-300 font-mono">
+                            <span class="absolute right-0 text-xs text-neutral-500 font-mono">DAYS</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <button id="btn-launch" onclick="activateSpace()"
+                        class="btn-launch w-full md:w-auto px-12 py-3 hairline-border bg-transparent text-white text-xs font-mono tracking-widest uppercase rounded focus:outline-none">
+                        LAUNCH DREAM ROUTER // 启动路由
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 激活成功面板 -->
+        <div id="activation-result" class="activation-overlay fixed inset-0 z-40 flex items-center justify-center bg-black/80 backdrop-blur-sm px-4">
+            <div class="max-w-lg w-full text-center space-y-6">
+                <div class="flex justify-center">
+                    <span class="status-pulse w-1.5 h-1.5 rounded-full bg-[#39FF14] shadow-[0_0_8px_rgba(57,255,20,0.6)]"></span>
+                </div>
+                <h2 class="text-xl md:text-2xl font-extrabold wuxian-tracking uppercase text-[#39FF14]">空间已锁定</h2>
+                <p id="result-message" class="text-xs text-neutral-400 font-mono leading-relaxed"></p>
+                <div id="result-tasks" class="text-left space-y-2 max-w-sm mx-auto"></div>
+                <button onclick="closeResult()" class="btn-launch px-8 py-2 hairline-border text-xs font-mono tracking-widest uppercase rounded text-neutral-400">
+                    CONTINUE // 继续
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="w-full h-10 hairline-top px-4 flex items-center justify-between text-[10px] text-neutral-600 font-mono">
+        <div id="footer-status">SYS_STATUS: READY</div>
+        <div>WUXIAN OMNI-NETWORK © 2026</div>
+    </footer>
+
+    <script>
+        const API_BASE = 'http://localhost:3401';
+
+        const TEMPLATE_MAP = [
+            { keywords: ['考', '证', '高考', 'SAT', '托福', '录取', '提分', '刷题'], id: 'tpl-cert-30d' },
+            { keywords: ['语言', '英语', '流利', '习惯', '坚持', '阅读', '健身', '减肥'], id: 'tpl-english-365d' },
+            { keywords: ['画', '创作', '设计', '艺术', '画展', '作品', '策展'], id: 'tpl-artshow-180d' },
+        ];
+
+        window.onload = function() {
+            renderInfinityTracks();
+            setInterval(updateClock, 1000);
+            updateClock();
+        };
+
+        function renderInfinityTracks() {
+            const group = document.getElementById('svg-star-tracks');
+            const totalLines = 24;
+
+            for (let i = 0; i < totalLines; i++) {
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const scale = 65 - (i * 0.8);
+                const d = [];
+                const points = 100;
+
+                for (let j = 0; j <= points; j++) {
+                    const t = (j / points) * Math.PI * 2;
+                    const sinT = Math.sin(t);
+                    const cosT = Math.cos(t);
+                    const denom = 1 + sinT * sinT;
+                    const x = 100 + (scale * cosT) / denom;
+                    const y = 50 + (scale * sinT * cosT) / denom;
+                    d.push((j === 0 ? 'M' : 'L') + ` ${x} ${y}`);
+                }
+
+                path.setAttribute('d', d.join(' '));
+                path.setAttribute('class', 'infinity-line');
+                path.setAttribute('stroke', 'url(#neonGradient)');
+                path.style.opacity = (1 - (i / totalLines)) * 0.5 + 0.1;
+                group.appendChild(path);
+            }
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const el = document.getElementById('system-clock');
+            if (el) el.textContent = `ROUTER ACTIVE // UTC ${now.toISOString().slice(11, 19)}`;
+        }
+
+        function detectDevice() {
+            return window.innerWidth < 768 ? 'MOBILE' : 'PC';
+        }
+
+        function matchTemplate(goal) {
+            const text = goal.toLowerCase();
+            for (const tpl of TEMPLATE_MAP) {
+                if (tpl.keywords.some(kw => text.includes(kw.toLowerCase()))) {
+                    return tpl.id;
+                }
+            }
+            return 'tpl-cert-30d';
+        }
+
+        function generateUserId() {
+            const stored = localStorage.getItem('wuxian_user_id');
+            if (stored) return stored;
+            const id = 'user-' + Math.random().toString(36).slice(2, 10);
+            localStorage.setItem('wuxian_user_id', id);
+            return id;
+        }
+
+        async function activateSpace() {
+            const goal = document.getElementById('input-goal').value.trim();
+            const time = parseInt(document.getElementById('input-time').value, 10);
+            const btn = document.getElementById('btn-launch');
+            const footer = document.getElementById('footer-status');
+
+            if (!goal || !time || time < 1) {
+                shakeInputs();
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'LOCKING COORDINATES // 锁定坐标中...';
+            footer.textContent = 'SYS_STATUS: ACTIVATING';
+
+            const payload = {
+                userId: generateUserId(),
+                chosenTemplateId: matchTemplate(goal),
+                userGoalText: goal,
+                userTimeBaseline: time,
+                deviceType: detectDevice(),
+            };
+
+            try {
+                const res = await fetch(`${API_BASE}/api/user/activate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!res.ok) throw new Error('API unavailable');
+
+                const data = await res.json();
+                showResult(data, goal, time);
+                footer.textContent = `SYS_STATUS: LOCKED // ${data.syncLatencyMs}ms`;
+            } catch (_) {
+                showResultLocal(goal, time);
+                footer.textContent = 'SYS_STATUS: LOCAL MODE';
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'LAUNCH DREAM ROUTER // 启动路由';
+        }
+
+        function showResult(data, goal, time) {
+            const msg = document.getElementById('result-message');
+            const tasks = document.getElementById('result-tasks');
+
+            msg.innerHTML = [
+                `目标轴: ${goal}`,
+                `时间轴: ${time} 天`,
+                `模板: ${data.templateId} v${data.templateVersion}`,
+                `同步延迟: ${data.syncLatencyMs}ms`,
+                `布局: ${data.device.layout} (${data.device.deviceType})`,
+                `初始斜率: ${data.initialSlope.toFixed(4)}`,
+            ].join('<br>');
+
+            tasks.innerHTML = data.todayTasks.map(t =>
+                `<p class="text-[11px] text-neutral-500 font-mono border-l border-[#39FF14]/30 pl-3">[${t.durationMinutes}min] ${t.taskDescription}</p>`
+            ).join('');
+
+            document.getElementById('activation-result').classList.add('active');
+        }
+
+        function showResultLocal(goal, time) {
+            const msg = document.getElementById('result-message');
+            const tasks = document.getElementById('result-tasks');
+
+            msg.innerHTML = [
+                `目标轴: ${goal}`,
+                `时间轴: ${time} 天`,
+                `模式: 离线本地锁定（启动 API Server 后可同步）`,
+            ].join('<br>');
+
+            tasks.innerHTML = `<p class="text-[11px] text-neutral-500 font-mono border-l border-[#FFF01F]/30 pl-3">逆向拆解引擎待连接管理端...</p>`;
+
+            document.getElementById('activation-result').classList.add('active');
+        }
+
+        function shakeInputs() {
+            const panel = document.getElementById('main-panel');
+            panel.style.transform = 'translateX(4px)';
+            setTimeout(() => { panel.style.transform = ''; }, 100);
+            setTimeout(() => { panel.style.transform = 'translateX(-4px)'; }, 150);
+            setTimeout(() => { panel.style.transform = ''; }, 250);
+        }
+
+        function closeResult() {
+            document.getElementById('activation-result').classList.remove('active');
+        }
+    </script>
+</body>
+</html>

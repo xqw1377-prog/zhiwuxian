@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">WUXIAN ZHI</string>
+    <string name="title_activity_main">WUXIAN ZHI</string>
+    <string name="package_name">com.wuxian.zhi</string>
+    <string name="custom_url_scheme">com.wuxian.zhi</string>
+</resources>

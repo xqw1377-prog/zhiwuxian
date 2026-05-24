@@ -1,5 +1,7 @@
 # WUXIAN 部署与运维
 
+**新机器从零部署（与 GitHub main 对齐）**：见 [deploy-new-machine.md](./deploy-new-machine.md)。
+
 ## 1) 本地运行
 
 ### 前置

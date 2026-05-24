@@ -3,6 +3,9 @@
   "version": "3.5.0",
   "private": true,
   "description": "WUXIAN 双轴逆向拆解与动态重算核心引擎",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "tsx watch server/index.ts",
     "server": "tsx server/index.ts",
@@ -30,6 +33,8 @@
     "lint": "eslint . --ext .ts,.tsx --ignore-pattern dist --ignore-pattern node_modules --ignore-pattern legacy --ignore-pattern data",
     "lint:fix": "eslint . --ext .ts,.tsx --fix --ignore-pattern dist --ignore-pattern node_modules --ignore-pattern legacy --ignore-pattern data",
     "verify": "npm run typecheck && npm run lint && npm test && npm run build:web",
+    "deploy:check": "tsx scripts/deploy-check.ts",
+    "e2e:staging": "tsx scripts/e2e-staging.ts",
     "e2e:auth-prod": "tsx scripts/e2e-auth-production.ts",
     "e2e:svg-security": "tsx scripts/e2e-svg-security.ts",
     "e2e:real-url": "tsx scripts/e2e-real-url.ts",

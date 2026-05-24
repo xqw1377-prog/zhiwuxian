@@ -9,10 +9,13 @@
 ## 快速启动
 
 ```bash
-npm install
+npm ci
+npm run build:web
 npm run server        # 后端 API → http://localhost:3401
 npm run dev           # 同上（tsx watch 模式）
 ```
+
+**另一台电脑部署**（与 GitHub 版本一致）：见 [docs/deploy-new-machine.md](docs/deploy-new-machine.md)，发版后运行 `npm run deploy:check`。
 
 ## Web 前端（独立开发）
 
